@@ -38,7 +38,7 @@ const LeaguePage = ({ leagueId }) => {
     fetchData();
   }, [leagueId]);
 
-  if (loading) return <div className="text-center text-xl mt-10">Loading...</div>;
+  if (loading) return <div className="text-center text-xl mt-10">Loading...Patience you son of a b...</div>;
   if (error) return <div className="text-center text-xl mt-10 text-red-500">{error}</div>;
 
   const getTeamName = (roster, user) =>
