@@ -47,7 +47,7 @@ const LeaguePage = ({ leagueId }) => {
 
   return (
     <div className="container mx-auto p-6">
-      <h1 className="text-4xl font-bold text-center mb-8">
+      <h1 className="text-4xl mt-8 font-bold text-center mb-8">
         {leagueInfo.name} ({leagueInfo.season})
       </h1>
 
