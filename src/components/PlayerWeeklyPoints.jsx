@@ -1,25 +1,32 @@
-import React, { useState } from 'react';
-import manualDefensePoints from '../utils/manualDefensePoints'; // Import manual defense points
+import React, { useEffect, useState } from 'react';
+import manualDefensePoints from '../utils/manualDefensePoints'; 
+import { getLeagueInfo } from '../api/sleeperApi'; 
 
-const PlayerWeeklyPoints = ({ playerId, weeklyPoints = {} }) => {
+const PlayerWeeklyPoints = ({ playerId, leagueId, weeklyPoints = {} }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [currentWeek, setCurrentWeek] = useState(null); // Set default to null
 
-  // Get the current week dynamically
-  const getCurrentWeek = () => {
-    const now = new Date();
-    const firstSunday = new Date(now.getFullYear(), 8, 7 - (new Date(now.getFullYear(), 8, 7).getDay())); // 2nd Sunday of September
-    const weekDifference = Math.ceil((now - firstSunday) / (7 * 24 * 60 * 60 * 1000)); // Week number
-    return Math.min(weekDifference, 17); // Cap at 17 weeks
-  };
+  // Fetch current week from the Sleeper API
+  useEffect(() => {
+    const fetchCurrentWeek = async () => {
+      try {
+        const leagueInfo = await getLeagueInfo(leagueId);
+        console.log('Fetched Current Week:', leagueInfo.settings.current_week); // Debugging
+        setCurrentWeek(leagueInfo.settings.current_week); // Set the correct current week
+      } catch (error) {
+        console.error('Error fetching current week:', error);
+      }
+    };
 
-  const currentWeek = getCurrentWeek();
+    fetchCurrentWeek();
+  }, [leagueId]);
 
   const toggleDropdown = () => setIsOpen(!isOpen);
 
-  // Helper to determine the points for a specific week
+  // Helper to get points for a week (with manual fallback)
   const getWeekPoints = (week) => {
-    const apiPoints = weeklyPoints[week]; // API points
-    const manualPoints = manualDefensePoints[playerId]?.[week] ?? 0; // Manual fallback
+    const apiPoints = weeklyPoints[week];
+    const manualPoints = manualDefensePoints[playerId]?.[week] ?? 0;
     return apiPoints !== undefined ? apiPoints : manualPoints;
   };
 
@@ -36,11 +43,11 @@ const PlayerWeeklyPoints = ({ playerId, weeklyPoints = {} }) => {
         <ul className="ml-4 mt-2">
           {Array.from({ length: 17 }, (_, i) => i + 1).map((week) => {
             const isCurrentWeek = week === currentWeek;
-            const weekClass = isCurrentWeek 
+            const weekClass = isCurrentWeek
               ? 'underline text-blue-800 font-semibold'
               : 'text-zinc-500';
-            const pointsClass = isCurrentWeek 
-              ? 'text-blue-800 font-semibold' 
+            const pointsClass = isCurrentWeek
+              ? 'text-blue-800 font-semibold'
               : 'text-zinc-800';
 
             return (

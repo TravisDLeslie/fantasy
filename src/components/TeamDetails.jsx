@@ -1,27 +1,29 @@
-// src/components/TeamDetails.jsx
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useLocation } from 'react-router-dom';
+import { FaChevronDown, FaChevronUp, FaChartLine } from 'react-icons/fa';
 import { getLeagueRosters, getPlayersMetadata, getLeagueMatchups } from '../api/sleeperApi';
-import PlayerWeeklyPoints from './PlayerWeeklyPoints'; // Weekly points component
-import { FaChevronDown, FaChevronUp } from 'react-icons/fa'; // Import icons
-import teamAbbreviations from '../utils/teamAbbreviations'; // Team abbreviations utility
-import { useDefensePoints } from '../hooks/useDefensePoints'; // Hook for defense points
+import PlayerWeeklyPoints from './PlayerWeeklyPoints';
+import PlayerChart from './PlayerChart';
+import teamAbbreviations from '../utils/teamAbbreviations';
+import { useDefensePoints } from '../hooks/useDefensePoints';
+import useTeamByeWeeks from '../hooks/useTeamByeWeeks';
 
 const TeamDetails = ({ leagueId }) => {
   const { rosterId } = useParams();
-  const location = useLocation(); // Access state from LeaguePage
-  const { teamName, defensePoints } = location.state || {}; // Extract state
+  const location = useLocation();
+  const { teamName, defensePoints } = location.state || {};
 
-  const { getDefensePoints } = useDefensePoints(); // Use custom hook logic
+  const { getDefensePoints } = useDefensePoints();
+  const { getTeamByeWeek } = useTeamByeWeeks();
 
   const [roster, setRoster] = useState(null);
   const [playersMetadata, setPlayersMetadata] = useState({});
   const [playerPoints, setPlayerPoints] = useState({});
-  const [openDropdowns, setOpenDropdowns] = useState({}); // Track open dropdowns
+  const [openDropdowns, setOpenDropdowns] = useState({});
+  const [selectedPlayer, setSelectedPlayer] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Fetch data on component mount
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -40,7 +42,6 @@ const TeamDetails = ({ leagueId }) => {
         const weeklyPoints = {};
         const processed = new Set();
 
-        // Fetch matchups across the season
         const allMatchups = await Promise.all(
           Array.from({ length: 17 }, (_, i) => getLeagueMatchups(leagueId, i + 1))
         );
@@ -78,7 +79,20 @@ const TeamDetails = ({ leagueId }) => {
     }));
   };
 
-  if (loading) return <div className="text-center text-xl mt-10">Loading...Patience you son of a b...</div>;
+  const handleChartClick = (playerId, playerName, teamAbbr) => {
+    const byeWeek = getTeamByeWeek(teamAbbr);
+    const playerData = {
+      id: playerId,
+      name: playerName,
+      weeklyPoints: playerPoints.weeklyPoints[playerId] || {},
+      byeWeek,
+    };
+    setSelectedPlayer(playerData);
+  };
+
+  const closeModal = () => setSelectedPlayer(null);
+
+  if (loading) return <div className="text-center text-xl mt-10">Loading...</div>;
   if (error) return <div className="text-center text-xl mt-10 text-red-500">{error}</div>;
 
   const sortedPlayers = roster?.players?.map((playerId) => {
@@ -93,7 +107,9 @@ const TeamDetails = ({ leagueId }) => {
       ? getDefensePoints(playerId, rosterId, defensePoints)
       : playerPoints.totalPoints[playerId] || 0;
 
-    return { id: playerId, name: playerName, position, points: rawPoints.toFixed(2) };
+    const teamAbbr = isDefense ? playerId : playerData.team;
+
+    return { id: playerId, name: playerName, position, points: rawPoints.toFixed(2), teamAbbr };
   }).sort((a, b) => b.points - a.points);
 
   return (
@@ -103,17 +119,21 @@ const TeamDetails = ({ leagueId }) => {
         {teamName || roster?.settings?.team_name || 'Team Roster'}
       </h1>
       <ul className="mt-6 space-y-4">
-        {sortedPlayers.map(({ id, name, position, points }) => (
+        {sortedPlayers.map(({ id, name, position, points, teamAbbr }) => (
           <li key={id} className="text-base md:text-lg text-zinc-800">
-            <div
-              className="flex justify-start items-center cursor-pointer"
-              onClick={() => toggleDropdown(id)}
-            >
-              <div>
+            <div className="flex items-center justify-between md:justify-start md:space-x-2">
+              <div className="flex-1 cursor-pointer" onClick={() => toggleDropdown(id)}>
                 {name} <span className="text-zinc-500 text-sm">{position}</span> - 
-                <span className="text-zinc-900 text-base md:text-lg font-regular"> Total Points: {points}</span>
+                <span className="text-zinc-900 text-base md:text-lg">
+                  {points !== '0.00' ? `${points} Pts` : 'Bye Week'}
+                </span>
               </div>
-              <div className="ml-8">
+              <div className="flex items-center space-x-2">
+                <FaChartLine
+                  className="text-blue-500 cursor-pointer hover:text-blue-700"
+                  size={16}
+                  onClick={() => handleChartClick(id, name, teamAbbr)}
+                />
                 {openDropdowns[id] ? <FaChevronUp size={12} /> : <FaChevronDown size={12} />}
               </div>
             </div>
@@ -126,6 +146,16 @@ const TeamDetails = ({ leagueId }) => {
           </li>
         ))}
       </ul>
+
+      {selectedPlayer && (
+        <PlayerChart
+          playerName={selectedPlayer.name}
+          playerId={selectedPlayer.id}
+          weeklyPoints={selectedPlayer.weeklyPoints}
+          byeWeek={selectedPlayer.byeWeek}
+          onClose={closeModal}
+        />
+      )}
     </div>
   );
 };
