@@ -78,7 +78,7 @@ const TeamDetails = ({ leagueId }) => {
     }));
   };
 
-  if (loading) return <div className="text-center text-xl mt-10">Loading...</div>;
+  if (loading) return <div className="text-center text-xl mt-10">Loading...Patience you son of a b...</div>;
   if (error) return <div className="text-center text-xl mt-10 text-red-500">{error}</div>;
 
   const sortedPlayers = roster?.players?.map((playerId) => {
@@ -104,14 +104,14 @@ const TeamDetails = ({ leagueId }) => {
       </h1>
       <ul className="mt-6 space-y-4">
         {sortedPlayers.map(({ id, name, position, points }) => (
-          <li key={id} className="text-lg text-zinc-800">
+          <li key={id} className="text-base md:text-lg text-zinc-800">
             <div
               className="flex justify-start items-center cursor-pointer"
               onClick={() => toggleDropdown(id)}
             >
               <div>
                 {name} <span className="text-zinc-500 text-sm">{position}</span> - 
-                <span className="text-zinc-900 text-lg font-regular"> Total Points: {points}</span>
+                <span className="text-zinc-900 text-base md:text-lg font-regular"> Total Points: {points}</span>
               </div>
               <div className="ml-8">
                 {openDropdowns[id] ? <FaChevronUp size={12} /> : <FaChevronDown size={12} />}
