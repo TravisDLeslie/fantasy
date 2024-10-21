@@ -1,14 +1,11 @@
-// src/components/LeaguePage.jsx
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getLeagueInfo, getLeagueUsers, getLeagueRosters } from '../api/sleeperApi';
-import { fetchDefensePoints } from './DefenseDetails'; // Import defense points function
 
 const LeaguePage = ({ leagueId }) => {
   const [leagueInfo, setLeagueInfo] = useState(null);
   const [users, setUsers] = useState([]);
   const [rosters, setRosters] = useState([]);
-  const [defensePoints, setDefensePoints] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -25,13 +22,10 @@ const LeaguePage = ({ leagueId }) => {
         setLeagueInfo(info);
         setUsers(userData);
         setRosters(rosterData);
-
-        const fetchedDefensePoints = await fetchDefensePoints(leagueId);
-        setDefensePoints(fetchedDefensePoints);
+        setLoading(false);
       } catch (err) {
         console.error('Error fetching league data:', err);
         setError('Failed to load league data. Please try again.');
-      } finally {
         setLoading(false);
       }
     };
@@ -42,15 +36,30 @@ const LeaguePage = ({ leagueId }) => {
   const getTeamName = (roster, user) =>
     roster.settings.team_name || user?.metadata?.team_name || 'Unnamed Team';
 
-  if (loading) return <div className="text-center text-white text-xl mt-10">Kindly hold on until I finish a cup of coffee...</div>;
-  if (error) return <div className="text-center text-xl mt-10 text-red-500">{error}</div>;
+  if (loading) {
+    return (
+      <div className="text-center text-white text-xl mt-10">
+        Kindly hold on until I finish a cup of coffee...
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center text-xl mt-10 text-red-500">
+        {error}
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto p-6">
       <h1 className="text-4xl mt-8 font-bold text-center text-white mb-2">
         {leagueInfo.name} ({leagueInfo.season})
       </h1>
-      <h2 className="text-center text-white mb-8"> Where the neggin is real!</h2>
+      <h2 className="text-center text-white mb-8">
+        Where the neggin is real!
+      </h2>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {rosters.map((roster) => {
@@ -61,7 +70,6 @@ const LeaguePage = ({ leagueId }) => {
             <Link
               to={`/team/${roster.roster_id}`}
               key={roster.roster_id}
-              state={{ defensePoints }}
             >
               <div className="bg-white p-6 shadow-lg rounded-lg hover:shadow-xl transition">
                 <div className="flex items-center space-x-4">
@@ -78,7 +86,9 @@ const LeaguePage = ({ leagueId }) => {
                     <h2 className="text-2xl font-semibold">
                       {user?.display_name || 'Unknown Owner'}
                     </h2>
-                    <p className="text-lg text-gray-700 font-medium">Team: {teamName}</p>
+                    <p className="text-lg text-gray-700 font-medium">
+                      Team: {teamName}
+                    </p>
                     <p className="text-sm text-gray-500">
                       Wins: {roster.settings.wins} | Losses: {roster.settings.losses}
                     </p>

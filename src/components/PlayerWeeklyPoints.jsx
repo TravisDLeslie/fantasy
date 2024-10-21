@@ -33,7 +33,7 @@ const PlayerWeeklyPoints = ({ playerId, leagueId, weeklyPoints = {} }) => {
   return (
     <div className="mt-1">
       <button
-        className="text-base text-blue-500 hover:underline"
+        className="text-base text-[#BCC3FF] hover:underline"
         onClick={toggleDropdown}
       >
         {isOpen ? 'Hide Weekly Points' : 'Show Weekly Points'}

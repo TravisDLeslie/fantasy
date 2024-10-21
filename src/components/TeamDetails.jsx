@@ -8,6 +8,23 @@ import teamAbbreviations from '../utils/teamAbbreviations';
 import { useDefensePoints } from '../hooks/useDefensePoints';
 import useTeamByeWeeks from '../hooks/useTeamByeWeeks';
 
+// Define position styles for background, text color, and border radius
+const positionStyles = {
+  QB: { text: 'text-[#FC2B6D]', bg: 'bg-[#323655]', border: 'rounded-md' },
+  RB: { text: 'text-[#20CEB8]', bg: 'bg-[#323655]', border: 'rounded-md' },
+  WR: { text: 'text-[#56C9F8]', bg: 'bg-[#323655]', border: 'rounded-md' },
+  TE: { text: 'text-[#FEAE58]', bg: 'bg-[#323655]', border: 'rounded-md' },
+  K: { text: 'text-[#C96CFF]', bg: 'bg-[#323655]', border: 'rounded-md' },
+  DEF: { text: 'text-[#BF755D]', bg: 'bg-[#323655]', border: 'rounded-md' },
+  FLEX: { text: 'text-pink-900', bg: 'bg-[#323655]', border: 'rounded-md' },
+};
+
+const getPositionStyles = (position) => positionStyles[position] || { 
+  text: 'text-gray-900', 
+  bg: 'bg-gray-300', 
+  border: 'rounded' 
+};
+
 const TeamDetails = ({ leagueId }) => {
   const { rosterId } = useParams();
   const location = useLocation();
@@ -92,7 +109,7 @@ const TeamDetails = ({ leagueId }) => {
 
   const closeModal = () => setSelectedPlayer(null);
 
-  if (loading) return <div className="text-center text-xl mt-10">Kindly hold on until I finish a cup of coffee...</div>;
+  if (loading) return <div className="text-center text-white text-xl mt-10">Loading...</div>;
   if (error) return <div className="text-center text-xl mt-10 text-red-500">{error}</div>;
 
   const sortedPlayers = roster?.players?.map((playerId) => {
@@ -102,44 +119,52 @@ const TeamDetails = ({ leagueId }) => {
       ? teamAbbreviations[playerId] || `Unknown Team (ID: ${playerId})`
       : `${playerData.first_name || 'Unknown'} ${playerData.last_name || 'Player'}`;
 
-    const position = playerData?.position ? `(${playerData.position})` : '';
+    const position = playerData?.position || 'N/A';
     const rawPoints = isDefense
       ? getDefensePoints(playerId, rosterId, defensePoints)
       : playerPoints.totalPoints[playerId] || 0;
 
     const teamAbbr = isDefense ? playerId : playerData.team;
+    const { text, bg, border } = getPositionStyles(position);
 
-    return { id: playerId, name: playerName, position, points: rawPoints.toFixed(2), teamAbbr };
+    return {
+      id: playerId,
+      name: playerName,
+      position,
+      points: rawPoints.toFixed(2),
+      teamAbbr,
+      text,
+      bg,
+      border,
+    };
   }).sort((a, b) => b.points - a.points);
 
   return (
     <div className="container bg-[#15182D] mx-auto p-6">
-      <Link to="/" className="text-blue-500 hover:underline">← Back to League</Link>
+      <Link to="/" className="text-[#BCC3FF] hover:underline">← Back to League</Link>
       <h1 className="text-3xl text-white font-bold mt-4">
         {teamName || roster?.settings?.team_name || 'Team Roster'}
       </h1>
       <div className="flex">
       <ul className="mt-6 space-y-4">
-        {sortedPlayers.map(({ id, name, position, points, teamAbbr }) => (
-          <li key={id} className="text-base text-white md:text-lg text-white">
-            <div className="flex items-center justify-between md:justify-start md:space-x-2">
+        {sortedPlayers.map(({ id, name, position, points, teamAbbr, text, bg, border }) => (
+          <li key={id} className="text-base md:text-lg text-white">
+            <div className="flex items-center justify-between md:space-x-2">
               <div className="flex-1 cursor-pointer" onClick={() => toggleDropdown(id)}>
-                {name} <span className="text-zinc-500 text-sm">{position}</span> - 
-                <span className="ml-2 text-white text-base md:text-lg">
-                  {points !== '0.00' ? `${points} Pts` : 'Bye Week'}
-                </span>
+                <span className="font-semibold">{name}</span> 
+                <span className={`ml-2 text-xs font-semibold ${text} ${bg} ${border} px-2 py-1`}>{position}</span> for 
+                <span className="ml-2 text-sm text-gray-300">({teamAbbr})</span> - 
+                <span className="ml-2 text-white">{points !== '0.00' ? `${points} Pts` : 'Bye Week'}</span>
               </div>
-              
               <div className="flex items-center space-x-2">
                 <FaChartLine
-                  className="text-blue-500 cursor-pointer hover:text-blue-700"
+                  className="text-[#01F5BF] cursor-pointer hover:text-[#019977]"
                   size={16}
                   onClick={() => handleChartClick(id, name, teamAbbr)}
                 />
                 {openDropdowns[id] ? <FaChevronUp size={12} /> : <FaChevronDown size={12} />}
               </div>
             </div>
-
             {openDropdowns[id] && (
               <div className="mt-2">
                 <PlayerWeeklyPoints playerId={id} weeklyPoints={playerPoints.weeklyPoints[id] || {}} />
@@ -149,7 +174,6 @@ const TeamDetails = ({ leagueId }) => {
         ))}
       </ul>
       </div>
-
       {selectedPlayer && (
         <PlayerChart
           playerName={selectedPlayer.name}
