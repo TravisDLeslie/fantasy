@@ -146,15 +146,20 @@ const TeamDetails = ({ leagueId }) => {
         {teamName || roster?.settings?.team_name || 'Team Roster'}
       </h1>
       <div className="flex">
-      <ul className="mt-6 space-y-4">
+      <ul className="mt-6 space-y-4 w-full">
         {sortedPlayers.map(({ id, name, position, points, teamAbbr, text, bg, border }) => (
           <li key={id} className="text-base md:text-lg text-white">
-            <div className="flex items-center justify-between md:space-x-2">
-              <div className="flex-1 cursor-pointer" onClick={() => toggleDropdown(id)}>
-                <span className="font-semibold">{name}</span> 
-                <span className={`ml-2 text-xs font-semibold ${text} ${bg} ${border} px-2 py-1`}>{position}</span> for 
-                <span className="ml-2 text-sm text-gray-300">({teamAbbr})</span> - 
-                <span className="ml-2 text-white">{points !== '0.00' ? `${points} Pts` : 'Bye Week'}</span>
+            <div className="flex w-full items-start justify-between md:space-x-2">
+              <div className="md:flex-1 cursor-pointer" onClick={() => toggleDropdown(id)}>
+                <div className='flex'>
+                <span className="font-regular">{name} - </span> 
+                <span className="ml-1 text-[#fcfcfc] font-semibold">{points !== '0.00' ? `${points} Pts` : 'Bye Week'}</span>
+                </div>
+                <div className='w-full mt-1 mb-1'>
+                <span className={`text-xs font-semibold ${text} ${bg} ${border} px-2 py-1`}>{position}</span> 
+                <span className="ml-1 text-xs text-gray-300">- for ({teamAbbr})</span>
+
+                </div>
               </div>
               <div className="flex items-center space-x-2">
                 <FaChartLine
