@@ -112,7 +112,7 @@ const TeamDetails = ({ leagueId }) => {
 
   const closeModal = () => setSelectedPlayer(null);
 
-  if (loading) return <div className="text-center text-white text-xl mt-10">Loading...</div>;
+  if (loading) return <div className="text-center text-white text-xl mt-10">Loading your wack roster...</div>;
   if (error) return <div className="text-center text-xl mt-10 text-red-500">{error}</div>;
 
   const sortedPlayers = roster?.players?.map((playerId) => {
