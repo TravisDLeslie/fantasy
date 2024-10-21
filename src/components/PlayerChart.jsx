@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { Line } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -14,39 +14,36 @@ import {
 ChartJS.register(Title, Tooltip, Legend, LineElement, PointElement, CategoryScale, LinearScale);
 
 const PlayerChart = ({ playerName = 'Player', weeklyPoints = {}, byeWeek, onClose }) => {
+  const chartRef = useRef();
+
   const labels = [];
   const data = [];
-  
-  // Get the current week dynamically to exclude future weeks
+
   const now = new Date();
   const currentWeek = Math.min(
     Math.ceil((now - new Date(now.getFullYear(), 8, 7)) / (7 * 24 * 60 * 60 * 1000)), 
     17
-  ); // Cap at week 17
+  );
 
-  // Iterate over weeks 1 through current week only
   Array.from({ length: currentWeek }, (_, i) => i + 1).forEach((week) => {
     if (week === byeWeek) {
       labels.push(`Week ${week} (Bye)`);
-      data.push(null); // No point plotted for bye week
+      data.push(null);
     } else if (weeklyPoints[week] !== undefined) {
       labels.push(`Week ${week}`);
       data.push(weeklyPoints[week]);
     } else {
       labels.push(`Week ${week}`);
-      data.push(null); // No data available for this week
+      data.push(null);
     }
   });
 
-  // Filter out bye weeks and future weeks
   const validPoints = data.filter((points) => points !== null);
-  
-  // Calculate total points and games played
   const totalPoints = validPoints.reduce((total, pts) => total + pts, 0);
   const gamesPlayed = validPoints.length;
-
-  // Avoid division by zero
-  const avgPoints = gamesPlayed > 0 ? totalPoints / gamesPlayed : 0;
+  const avgPoints = gamesPlayed > 0 ? (totalPoints / gamesPlayed).toFixed(2) : '0.00';
+  const minPoints = Math.min(...validPoints);
+  const maxPoints = Math.max(...validPoints);
 
   const chartData = {
     labels,
@@ -54,27 +51,108 @@ const PlayerChart = ({ playerName = 'Player', weeklyPoints = {}, byeWeek, onClos
       {
         label: 'Points per Week',
         data,
-        borderColor: 'blue',
+        borderColor: '#01F5BF',
         borderWidth: 2,
-        fill: false,
-        spanGaps: true, // Skip gaps for bye weeks
+        fill: true,
+        spanGaps: true,
+        lineTension: 0.2,
+        pointBackgroundColor: data.map((value) =>
+          value === minPoints ? '#E77C09' : value === maxPoints ? '#01F5BF' : '#01F5BF'
+        ),
       },
       {
-        label: 'Average Points',
-        data: Array(data.length).fill(avgPoints),
-        borderColor: 'orange',
+        label: `Average Points: ${avgPoints}`,
+        data: Array(data.length).fill(parseFloat(avgPoints)),
+        borderColor: '#B7640B',
         borderWidth: 2,
-        borderDash: [5, 5], // Dashed line for average
-        fill: false,
+        borderDash: [2, 5],
+        fill: true,
+        lineTension: 0.3,
       },
     ],
   };
 
+  const chartOptions = {
+    responsive: true,
+    plugins: {
+      legend: {
+        labels: {
+          color: '#fff',
+          font: { size: 14 },
+        },
+      },
+      tooltip: {
+        callbacks: {
+          label: (context) => {
+            const value = context.raw;
+            if (value === minPoints) return `Low: ${value} Pts`;
+            if (value === maxPoints) return `High: ${value} Pts`;
+            return `${value} Pts`;
+          },
+        },
+      },
+    },
+    scales: {
+      y: { ticks: { color: '#fff' } },
+      x: { ticks: { color: '#fff' } },
+    },
+    animation: {
+      onComplete: () => {
+        const chart = chartRef.current;
+        const { ctx, scales } = chart;
+        const xScale = scales.x;
+        const yScale = scales.y;
+
+        const minIndex = data.indexOf(minPoints);
+        const maxIndex = data.indexOf(maxPoints);
+
+        if (minIndex !== -1) {
+          const x = xScale.getPixelForValue(minIndex);
+          const y = yScale.getPixelForValue(minPoints);
+          drawLabel(ctx, `Low: ${minPoints}`, x, y, '#E77C09');
+        }
+
+        if (maxIndex !== -1) {
+          const x = xScale.getPixelForValue(maxIndex);
+          const y = yScale.getPixelForValue(maxPoints);
+          drawLabel(ctx, `High: ${maxPoints}`, x, y, '#01F5BF');
+        }
+      },
+    },
+  };
+
+  const drawLabel = (ctx, text, x, y, color) => {
+    ctx.save();
+    ctx.fillStyle = '#3B3F5E';
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+    ctx.font = '12px Arial';
+    const textWidth = ctx.measureText(text).width + 8;
+
+    ctx.beginPath();
+    ctx.moveTo(x - textWidth / 2, y - 20);
+    ctx.lineTo(x + textWidth / 2, y - 20);
+    ctx.arcTo(x + textWidth / 2 + 5, y - 15, x + textWidth / 2 + 5, y, 5);
+    ctx.lineTo(x + textWidth / 2 + 5, y + 5);
+    ctx.arcTo(x + textWidth / 2, y + 10, x - textWidth / 2, y + 10, 5);
+    ctx.lineTo(x - textWidth / 2 - 5, y + 10);
+    ctx.arcTo(x - textWidth / 2 - 5, y + 5, x - textWidth / 2 - 5, y - 15, 5);
+    ctx.lineTo(x - textWidth / 2 - 5, y - 20);
+    ctx.closePath();
+
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = color;
+    ctx.textAlign = 'center';
+    ctx.fillText(text, x, y - 5);
+    ctx.restore();
+  };
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-      <div className="bg-white p-8 rounded shadow-lg max-w-2xl w-full">
-        <h2 className="text-xl font-bold mb-4">{playerName} - Weekly Points</h2>
-        <Line data={chartData} />
+      <div className="bg-[#15182D] p-8 rounded shadow-lg max-w-2xl w-full">
+        <h2 className="text-xl text-white font-bold mb-4">{playerName} - Weekly Points</h2>
+        <Line ref={chartRef} data={chartData} options={chartOptions} />
         <button
           onClick={onClose}
           className="mt-4 px-4 py-2 bg-red-500 text-white rounded"

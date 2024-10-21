@@ -92,7 +92,7 @@ const TeamDetails = ({ leagueId }) => {
 
   const closeModal = () => setSelectedPlayer(null);
 
-  if (loading) return <div className="text-center text-xl mt-10">Loading...</div>;
+  if (loading) return <div className="text-center text-xl mt-10">Kindly hold on until I finish a cup of coffee...</div>;
   if (error) return <div className="text-center text-xl mt-10 text-red-500">{error}</div>;
 
   const sortedPlayers = roster?.players?.map((playerId) => {
@@ -113,21 +113,23 @@ const TeamDetails = ({ leagueId }) => {
   }).sort((a, b) => b.points - a.points);
 
   return (
-    <div className="container mx-auto p-6">
+    <div className="container bg-[#15182D] mx-auto p-6">
       <Link to="/" className="text-blue-500 hover:underline">← Back to League</Link>
-      <h1 className="text-3xl font-bold mt-4">
+      <h1 className="text-3xl text-white font-bold mt-4">
         {teamName || roster?.settings?.team_name || 'Team Roster'}
       </h1>
+      <div className="flex">
       <ul className="mt-6 space-y-4">
         {sortedPlayers.map(({ id, name, position, points, teamAbbr }) => (
-          <li key={id} className="text-base md:text-lg text-zinc-800">
+          <li key={id} className="text-base text-white md:text-lg text-white">
             <div className="flex items-center justify-between md:justify-start md:space-x-2">
               <div className="flex-1 cursor-pointer" onClick={() => toggleDropdown(id)}>
                 {name} <span className="text-zinc-500 text-sm">{position}</span> - 
-                <span className="text-zinc-900 text-base md:text-lg">
+                <span className="ml-2 text-white text-base md:text-lg">
                   {points !== '0.00' ? `${points} Pts` : 'Bye Week'}
                 </span>
               </div>
+              
               <div className="flex items-center space-x-2">
                 <FaChartLine
                   className="text-blue-500 cursor-pointer hover:text-blue-700"
@@ -146,6 +148,7 @@ const TeamDetails = ({ leagueId }) => {
           </li>
         ))}
       </ul>
+      </div>
 
       {selectedPlayer && (
         <PlayerChart

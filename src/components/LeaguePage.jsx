@@ -42,14 +42,15 @@ const LeaguePage = ({ leagueId }) => {
   const getTeamName = (roster, user) =>
     roster.settings.team_name || user?.metadata?.team_name || 'Unnamed Team';
 
-  if (loading) return <div className="text-center text-xl mt-10">Loading...</div>;
+  if (loading) return <div className="text-center text-white text-xl mt-10">Kindly hold on until I finish a cup of coffee...</div>;
   if (error) return <div className="text-center text-xl mt-10 text-red-500">{error}</div>;
 
   return (
     <div className="container mx-auto p-6">
-      <h1 className="text-4xl mt-8 font-bold text-center mb-8">
+      <h1 className="text-4xl mt-8 font-bold text-center text-white mb-2">
         {leagueInfo.name} ({leagueInfo.season})
       </h1>
+      <h2 className="text-center text-white mb-8"> Where the neggin is real!</h2>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {rosters.map((roster) => {

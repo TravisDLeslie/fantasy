@@ -47,12 +47,12 @@ const PlayerWeeklyPoints = ({ playerId, leagueId, weeklyPoints = {} }) => {
               ? 'underline text-blue-800 font-semibold'
               : 'text-zinc-500';
             const pointsClass = isCurrentWeek
-              ? 'text-blue-800 font-semibold'
-              : 'text-zinc-800';
+              ? 'text-white font-semibold'
+              : 'text-white';
 
             return (
               <li key={week} className={`text-lg ${weekClass}`}>
-                Week {week}: <span className={`text-lg ${pointsClass}`}>
+                Week {week}: <span className={`text-lg ml-4 ${pointsClass}`}>
                   {getWeekPoints(week).toFixed(2)} Points
                 </span>
               </li>

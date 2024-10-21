@@ -6,9 +6,10 @@ import DefenseDetails from './components/DefenseDetails';
 
 const App = () => {
   const leagueId = '1130687436515831808'; // Your league ID
+  
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-[#15182D]">
       <Routes>
         <Route path="/" element={<LeaguePage leagueId={leagueId} />} />
         <Route path="/team/:rosterId" element={<TeamDetails leagueId={leagueId} />} />
