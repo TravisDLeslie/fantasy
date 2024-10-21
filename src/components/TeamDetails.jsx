@@ -96,16 +96,19 @@ const TeamDetails = ({ leagueId }) => {
     }));
   };
 
-  const handleChartClick = (playerId, playerName, teamAbbr) => {
+  const handleChartClick = (playerId, playerName, teamAbbr, position) => {
     const byeWeek = getTeamByeWeek(teamAbbr);
     const playerData = {
       id: playerId,
       name: playerName,
+      position,
+      teamAbbr,
       weeklyPoints: playerPoints.weeklyPoints[playerId] || {},
       byeWeek,
     };
     setSelectedPlayer(playerData);
   };
+  
 
   const closeModal = () => setSelectedPlayer(null);
 
@@ -161,11 +164,11 @@ const TeamDetails = ({ leagueId }) => {
 
                 </div>
               </div>
-              <div className="flex ml-4 items-center space-x-2">
+              <div className="flex ml-4 items-center space-x-4">
                 <FaChartLine
                   className="text-[#01F5BF] cursor-pointer hover:text-[#019977]"
                   size={16}
-                  onClick={() => handleChartClick(id, name, teamAbbr)}
+                  onClick={() => handleChartClick(id, name, teamAbbr, position)}
                 />
                 {openDropdowns[id] ? <FaChevronUp size={12} /> : <FaChevronDown size={12} />}
               </div>
@@ -180,13 +183,15 @@ const TeamDetails = ({ leagueId }) => {
       </ul>
       </div>
       {selectedPlayer && (
-        <PlayerChart
-          playerName={selectedPlayer.name}
-          playerId={selectedPlayer.id}
-          weeklyPoints={selectedPlayer.weeklyPoints}
-          byeWeek={selectedPlayer.byeWeek}
-          onClose={closeModal}
-        />
+       <PlayerChart
+       playerName={selectedPlayer.name}
+       position={selectedPlayer.position}
+       teamAbbr={selectedPlayer.teamAbbr}
+       weeklyPoints={selectedPlayer.weeklyPoints}
+       byeWeek={selectedPlayer.byeWeek}
+       onClose={closeModal}
+     />
+     
       )}
     </div>
   );

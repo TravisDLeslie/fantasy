@@ -13,8 +13,8 @@ import {
 
 ChartJS.register(Title, Tooltip, Legend, LineElement, PointElement, CategoryScale, LinearScale);
 
-const PlayerChart = ({ playerName = 'Player', weeklyPoints = {}, byeWeek, onClose }) => {
-  const chartRef = useRef();
+const PlayerChart = ({ playerName = 'Player', position, teamAbbr, weeklyPoints = {}, byeWeek, onClose }) => {
+    const chartRef = useRef();
 
   const labels = [];
   const data = [];
@@ -184,12 +184,16 @@ const PlayerChart = ({ playerName = 'Player', weeklyPoints = {}, byeWeek, onClos
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-      <div className="bg-[#15182D] p-8 rounded shadow-lg max-w-2xl w-full">
-        <h2 className="flex items-center justify-start text-base text-gray-400 font-semibold mb-4">
-          <span>{playerName}</span>
-          <span className="ml-4 text-sm text-white">{totalPoints.toFixed(2)} Pts</span>
+      <div className="bg-[#15182D] p-4 md:p-8 rounded shadow-lg max-w-2xl w-full">
+        <h2 className="flex flex-col items-center text-center text-gray-400 font-semibold mb-4 mt-2">
+          <span>
+            {playerName} - <span className="text-sm text-white">{totalPoints.toFixed(2)} Pts</span>
+          </span>
+          <span className="text-xs text-gray-300 mt-1">
+            {position} for ({teamAbbr})
+          </span>
         </h2>
-        <div className="p-4" style={{ height: '400px' }}>
+        <div className="p-1 md:p-4" style={{ height: '500px' }}>
           <Line ref={chartRef} data={chartData} options={chartOptions} />
         </div>
         <button
