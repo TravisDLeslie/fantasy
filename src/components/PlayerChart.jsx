@@ -25,19 +25,23 @@ const PlayerChart = ({ playerName = 'Player', weeklyPoints = {}, byeWeek, onClos
     17
   );
 
+  // Helper to determine if the week should be excluded
+  const shouldExcludeWeek = (week) =>
+    week === byeWeek || weeklyPoints[week] === 0 || weeklyPoints[week] === undefined;
+
+  // Fill the labels and data arrays, but exclude "bye" and "didn't play" weeks from the data
   Array.from({ length: currentWeek }, (_, i) => i + 1).forEach((week) => {
-    if (week === byeWeek) {
-      labels.push(`Week ${week} (Bye)`);
-      data.push(null);
-    } else if (weeklyPoints[week] !== undefined) {
-      labels.push(`Week ${week}`);
-      data.push(weeklyPoints[week]);
-    } else {
-      labels.push(`Week ${week}`);
-      data.push(null);
-    }
+    labels.push(
+      week === byeWeek
+        ? `Week ${week} (Bye)`
+        : weeklyPoints[week] === 0
+        ? `Week ${week} (Inactive)`
+        : `Week ${week}`
+    );
+    data.push(shouldExcludeWeek(week) ? null : weeklyPoints[week]);
   });
 
+  // Filter only valid points for calculations (exclude null values)
   const validPoints = data.filter((points) => points !== null);
   const totalPoints = validPoints.reduce((total, pts) => total + pts, 0);
   const avgPoints = validPoints.length > 0 ? (totalPoints / validPoints.length).toFixed(2) : '0.00';
@@ -75,7 +79,7 @@ const PlayerChart = ({ playerName = 'Player', weeklyPoints = {}, byeWeek, onClos
     responsive: true,
     maintainAspectRatio: false,
     layout: {
-      padding: { top: 30, bottom: 20, left: 10, right: 30 }, // Ensure padding on the right side
+      padding: { top: 30, bottom: 20, left: 10, right: 30 },
     },
     plugins: {
       legend: {
@@ -88,6 +92,10 @@ const PlayerChart = ({ playerName = 'Player', weeklyPoints = {}, byeWeek, onClos
         callbacks: {
           label: (context) => {
             const value = context.raw;
+            const week = context.label;
+
+            if (week.includes("Didn't Play")) return `${week}: 0 Pts`;
+            if (week.includes('Bye')) return `${week}: Bye Week`;
             if (value === minPoints) return `Low: ${value} Pts`;
             if (value === maxPoints) return `High: ${value} Pts`;
             return `${value} Pts`;
@@ -96,29 +104,28 @@ const PlayerChart = ({ playerName = 'Player', weeklyPoints = {}, byeWeek, onClos
       },
     },
     scales: {
-        y: {
-          beginAtZero: true,
-          ticks: {
-            color: '#fcfcfc',
-            padding: 10, // Add padding to y-axis ticks
-          },
-          grid: {
-            color: '#131313',
-            drawBorder: false, // Optional: Remove border to make it look cleaner
-          },
+      y: {
+        beginAtZero: true,
+        ticks: {
+          color: '#fcfcfc',
+          padding: 10,
         },
-        x: {
-          ticks: {
-            color: '#fcfcfc',
-            padding: 10, // Add padding to x-axis ticks
-          },
-          grid: {
-            color: '#131313',
-            drawBorder: false, // Optional: Remove border on x-axis
-          },
+        grid: {
+          color: '#131313',
+          drawBorder: false,
         },
       },
-      
+      x: {
+        ticks: {
+          color: '#fcfcfc',
+          padding: 10,
+        },
+        grid: {
+          color: '#131313',
+          drawBorder: false,
+        },
+      },
+    },
     animation: {
       onComplete: () => {
         const chart = chartRef.current;
@@ -145,10 +152,9 @@ const PlayerChart = ({ playerName = 'Player', weeklyPoints = {}, byeWeek, onClos
   };
 
   const drawLabel = (ctx, text, x, y, color, points) => {
-    const offsetX = Math.min(Math.max(x, 40), ctx.canvas.width - 40); // Keep label within bounds
+    const offsetX = Math.min(Math.max(x, 40), ctx.canvas.width - 40);
     const offsetY = Math.min(Math.max(y, 20), ctx.canvas.height - 20);
-    const padding = 5; // Padding inside the label box
-
+    const padding = 5;
 
     ctx.save();
     ctx.fillStyle = '#3B3F5E';
@@ -158,25 +164,23 @@ const PlayerChart = ({ playerName = 'Player', weeklyPoints = {}, byeWeek, onClos
     const labelText = `${text}: ${points} Pts`;
     const textWidth = ctx.measureText(labelText).width + 8;
 
-   // Draw rounded rectangle with padding
-  ctx.beginPath();
-  ctx.moveTo(x - textWidth / 2 - padding, y - 20 - padding);
-  ctx.lineTo(x + textWidth / 2 + padding, y - 20 - padding);
-  ctx.arcTo(x + textWidth / 2 + padding + 5, y - 15, x + textWidth / 2 + padding + 5, y, 5);
-  ctx.lineTo(x + textWidth / 2 + padding + 5, y + 5);
-  ctx.arcTo(x + textWidth / 2 + padding, y + 10, x - textWidth / 2 - padding, y + 10, 5);
-  ctx.lineTo(x - textWidth / 2 - padding - 5, y + 10);
-  ctx.arcTo(x - textWidth / 2 - padding - 5, y + 5, x - textWidth / 2 - padding - 5, y - 15, 5);
-  ctx.lineTo(x - textWidth / 2 - padding - 5, y - 20 - padding);
-  ctx.closePath();
+    ctx.beginPath();
+    ctx.moveTo(offsetX - textWidth / 2 - padding, offsetY - 20 - padding);
+    ctx.lineTo(offsetX + textWidth / 2 + padding, offsetY - 20 - padding);
+    ctx.arcTo(offsetX + textWidth / 2 + padding + 5, offsetY - 15, offsetX + textWidth / 2 + padding + 5, offsetY, 5);
+    ctx.lineTo(offsetX + textWidth / 2 + padding + 5, offsetY + 5);
+    ctx.arcTo(offsetX + textWidth / 2 + padding, offsetY + 10, offsetX - textWidth / 2 - padding, offsetY + 10, 5);
+    ctx.lineTo(offsetX - textWidth / 2 - padding - 5, offsetY + 10);
+    ctx.arcTo(offsetX - textWidth / 2 - padding - 5, offsetY + 5, offsetX - textWidth / 2 - padding - 5, offsetY - 15, 5);
+    ctx.closePath();
 
-  ctx.fill(); // Fill the background
-  ctx.stroke(); // Stroke the border
-  ctx.fillStyle = color; // Text color
-  ctx.textAlign = 'center';
-  ctx.fillText(labelText, x, y - 5); // Render the label text
-  ctx.restore();
-};
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = color;
+    ctx.textAlign = 'center';
+    ctx.fillText(labelText, offsetX, offsetY - 5);
+    ctx.restore();
+  };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
