@@ -31,16 +31,16 @@ const PlayerWeeklyPoints = ({ playerId, leagueId, weeklyPoints = {} }) => {
   };
 
   return (
-    <div className="mt-1">
+    <div className="mt-2 mb-4">
       <button
-        className="text-sm md:text-base text-[#BCC3FF] hover:underline"
+        className="text-xs md:text-xs bg-[#BCC3FF] font-semibold py-1.5 px-2 rounded-md text-[#1e1e1e] hover:underline"
         onClick={toggleDropdown}
       >
         {isOpen ? 'Hide Weekly Points' : 'Show Weekly Points'}
       </button>
 
       {isOpen && (
-        <ul className="ml-4 mt-2 py-2 space-y-1">
+        <ul className="ml-1 mt-2 py-2 space-y-1">
           {Array.from({ length: 17 }, (_, i) => i + 1).map((week) => {
             const isCurrentWeek = week === currentWeek;
             const weekClass = isCurrentWeek

@@ -146,14 +146,14 @@ const TeamDetails = ({ leagueId }) => {
         {teamName || roster?.settings?.team_name || 'Team Roster'}
       </h1>
       <div className="flex">
-      <ul className="mt-6 space-y-4 w-full">
+      <ul className="mt-6 space-y-4 w-full md:w-auto">
         {sortedPlayers.map(({ id, name, position, points, teamAbbr, text, bg, border }) => (
           <li key={id} className="text-base md:text-lg text-white">
             <div className="flex w-full items-start justify-between md:space-x-2">
               <div className="md:flex-1 cursor-pointer" onClick={() => toggleDropdown(id)}>
                 <div className='flex'>
                 <span className="font-regular">{name} - </span> 
-                <span className="ml-1 text-[#fcfcfc] font-semibold">{points !== '0.00' ? `${points} Pts` : 'Bye Week'}</span>
+                <span className="ml-1 text-[#fcfcfc] mr-4 font-semibold">{points !== '0.00' ? `${points} Pts` : 'Bye Week'}</span>
                 </div>
                 <div className='w-full mt-1 mb-1'>
                 <span className={`text-xs font-semibold ${text} ${bg} ${border} px-2 py-1`}>{position}</span> 
@@ -161,7 +161,7 @@ const TeamDetails = ({ leagueId }) => {
 
                 </div>
               </div>
-              <div className="flex items-center space-x-2">
+              <div className="flex ml-4 items-center space-x-2">
                 <FaChartLine
                   className="text-[#01F5BF] cursor-pointer hover:text-[#019977]"
                   size={16}
@@ -171,7 +171,7 @@ const TeamDetails = ({ leagueId }) => {
               </div>
             </div>
             {openDropdowns[id] && (
-              <div className="mt-2">
+              <div className="mt-2 mb-8 ">
                 <PlayerWeeklyPoints playerId={id} weeklyPoints={playerPoints.weeklyPoints[id] || {}} />
               </div>
             )}
