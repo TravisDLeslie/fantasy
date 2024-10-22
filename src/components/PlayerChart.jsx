@@ -13,7 +13,6 @@ import {
 
 ChartJS.register(Title, Tooltip, Legend, LineElement, PointElement, CategoryScale, LinearScale);
 
-// Define position styles for background, text color, and border radius
 const positionStyles = {
   QB: { text: 'text-[#FC2B6D]', bg: 'bg-[#323655]', border: 'rounded-md' },
   RB: { text: 'text-[#20CEB8]', bg: 'bg-[#323655]', border: 'rounded-md' },
@@ -24,17 +23,13 @@ const positionStyles = {
   FLEX: { text: 'text-pink-900', bg: 'bg-[#323655]', border: 'rounded-md' },
 };
 
-const getPositionStyles = (position) => 
-  positionStyles[position] || { text: 'text-gray-900', bg: 'bg-gray-300', border: 'rounded' };
+const getPositionStyles = (position) => positionStyles[position] || { 
+  text: 'text-gray-900', 
+  bg: 'bg-gray-300', 
+  border: 'rounded' 
+};
 
-const PlayerChart = ({
-  playerName = 'Player',
-  position,
-  teamAbbr,
-  weeklyPoints = {},
-  byeWeek,
-  onClose,
-}) => {
+const PlayerChart = ({ playerName, position, teamAbbr, weeklyPoints = {}, byeWeek, onClose }) => {
   const chartRef = useRef();
 
   const labels = [];
@@ -96,25 +91,21 @@ const PlayerChart = ({
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
-    layout: {
-      padding: { top: 30, bottom: 20, left: 10, right: 30 },
-    },
+    layout: { padding: { top: 30, bottom: 20, left: 10, right: 30 } },
     scales: {
       y: {
-        suggestedMin: minPoints - 5, // Dynamic range, avoid starting at zero
+        suggestedMin: minPoints - 5,
         suggestedMax: maxPoints + 5,
         ticks: { color: '#fcfcfc', padding: 10 },
-        grid: { color: '#131313', drawBorder: false },
+        grid: { color: '#2B2B2B', drawBorder: false },
       },
       x: {
         ticks: { color: '#fcfcfc', padding: 10 },
-        grid: { color: '#131313', drawBorder: false },
+        grid: { color: '#2B2B2B', drawBorder: false },
       },
     },
     plugins: {
-      legend: {
-        labels: { color: '#fff', font: { size: 14 } },
-      },
+      legend: { labels: { color: '#fff', font: { size: 14 } } },
       tooltip: {
         callbacks: {
           label: (context) => {
@@ -129,6 +120,56 @@ const PlayerChart = ({
         },
       },
     },
+    animation: {
+      onComplete: () => {
+        const chart = chartRef.current;
+        const { ctx, scales } = chart;
+        const xScale = scales.x;
+        const yScale = scales.y;
+
+        const minIndex = data.indexOf(minPoints);
+        const maxIndex = data.indexOf(maxPoints);
+
+        if (minIndex !== -1) {
+          const x = xScale.getPixelForValue(minIndex);
+          const y = yScale.getPixelForValue(minPoints);
+          drawLabel(ctx, 'Low', x, y, '#E77C09', minPoints);
+        }
+
+        if (maxIndex !== -1) {
+          const x = xScale.getPixelForValue(maxIndex);
+          const y = yScale.getPixelForValue(maxPoints);
+          drawLabel(ctx, 'High', x, y, '#01F5BF', maxPoints);
+        }
+      },
+    },
+  };
+
+  const drawLabel = (ctx, text, x, y, color, points) => {
+    ctx.save();
+    ctx.fillStyle = '#3B3F5E';
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.5;
+    ctx.font = '10px Arial';
+    const labelText = `${text}: ${points} Pts`;
+    const textWidth = ctx.measureText(labelText).width + 8;
+
+    ctx.beginPath();
+    ctx.moveTo(x - textWidth / 2, y - 20);
+    ctx.lineTo(x + textWidth / 2, y - 20);
+    ctx.arcTo(x + textWidth / 2 + 5, y - 15, x + textWidth / 2 + 5, y, 5);
+    ctx.lineTo(x + textWidth / 2 + 5, y + 5);
+    ctx.arcTo(x + textWidth / 2, y + 10, x - textWidth / 2, y + 10, 5);
+    ctx.lineTo(x - textWidth / 2 - 5, y + 10);
+    ctx.arcTo(x - textWidth / 2 - 5, y + 5, x - textWidth / 2 - 5, y - 15, 5);
+    ctx.closePath();
+
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = color;
+    ctx.textAlign = 'center';
+    ctx.fillText(labelText, x, y - 5);
+    ctx.restore();
   };
 
   const { text, bg, border } = getPositionStyles(position);
@@ -136,27 +177,19 @@ const PlayerChart = ({
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
       <div className="bg-[#15182D] p-4 md:p-8 rounded shadow-lg max-w-2xl w-full">
-        <h2 className="flex flex-col items-center text-center text-gray-400 font-semibold mb-4 mt-2">
-          <span className="flex items-center space-x-2">
-            <span className="text-lg">{playerName}</span>
-            <span className="text-sm text-white font-medium">{totalPoints.toFixed(2)} Pts</span>
-          </span>
-          <span className="mt-2 flex items-center space-x-2">
-            <span className={`text-xs font-semibold ${text} ${bg} ${border} px-2 py-1`}>
-              {position}
-            </span>
-            <span className="text-xs text-gray-300">- for ({teamAbbr})</span>
-          </span>
+        <h2 className="flex flex-col items-center text-center text-gray-200 font-regular mb-4 mt-2">
+          <span>{playerName} - <span className="text-sm text-white font-semibold">{totalPoints.toFixed(2)} Pts</span></span>
+          <div className='flex items-center'>
+          <span className={`text-xs ${text} ${bg} ${border} px-2 py-1 mt-2`}>{position}</span>
+          <span className="text-xs ml-2 text-gray-300 mt-1">- for ({teamAbbr})</span>
+          </div>
         </h2>
 
         <div className="p-1 md:p-4" style={{ height: '500px' }}>
           <Line ref={chartRef} data={chartData} options={chartOptions} />
         </div>
 
-        <button
-          onClick={onClose}
-          className="mt-4 px-4 py-2 bg-red-500 text-white rounded"
-        >
+        <button onClick={onClose} className="mt-4 px-4 py-2 bg-red-500 text-white rounded">
           Close
         </button>
       </div>
