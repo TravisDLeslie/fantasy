@@ -1,14 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useLocation } from 'react-router-dom';
-import { FaChevronDown, FaChevronUp, FaChartLine } from 'react-icons/fa';
+import { FaChartLine, FaInfoCircle } from 'react-icons/fa';
 import { getLeagueRosters, getPlayersMetadata, getLeagueMatchups } from '../api/sleeperApi';
-import PlayerWeeklyPoints from './PlayerWeeklyPoints';
+import PlayerWeeklyStats from './PlayerWeeklyStats'; // Assuming this is the modal component for weekly stats
 import PlayerChart from './PlayerChart';
 import teamAbbreviations from '../utils/teamAbbreviations';
 import { useDefensePoints } from '../hooks/useDefensePoints';
 import useTeamByeWeeks from '../hooks/useTeamByeWeeks';
 
-// Define position styles for background, text color, and border radius
 const positionStyles = {
   QB: { text: 'text-[#FC2B6D]', bg: 'bg-[#323655]', border: 'rounded-md' },
   RB: { text: 'text-[#20CEB8]', bg: 'bg-[#323655]', border: 'rounded-md' },
@@ -19,11 +18,8 @@ const positionStyles = {
   FLEX: { text: 'text-pink-900', bg: 'bg-[#323655]', border: 'rounded-md' },
 };
 
-const getPositionStyles = (position) => positionStyles[position] || { 
-  text: 'text-gray-900', 
-  bg: 'bg-gray-300', 
-  border: 'rounded' 
-};
+const getPositionStyles = (position) =>
+  positionStyles[position] || { text: 'text-gray-900', bg: 'bg-gray-300', border: 'rounded' };
 
 const TeamDetails = ({ leagueId }) => {
   const { rosterId } = useParams();
@@ -36,8 +32,8 @@ const TeamDetails = ({ leagueId }) => {
   const [roster, setRoster] = useState(null);
   const [playersMetadata, setPlayersMetadata] = useState({});
   const [playerPoints, setPlayerPoints] = useState({});
-  const [openDropdowns, setOpenDropdowns] = useState({});
   const [selectedPlayer, setSelectedPlayer] = useState(null);
+  const [infoModalPlayer, setInfoModalPlayer] = useState(null); // For the info modal
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -89,28 +85,33 @@ const TeamDetails = ({ leagueId }) => {
     fetchData();
   }, [leagueId, rosterId]);
 
-  const toggleDropdown = (playerId) => {
-    setOpenDropdowns((prev) => ({
-      ...prev,
-      [playerId]: !prev[playerId],
-    }));
-  };
-
   const handleChartClick = (playerId, playerName, teamAbbr, position) => {
     const byeWeek = getTeamByeWeek(teamAbbr);
-    const playerData = {
+    setSelectedPlayer({
       id: playerId,
       name: playerName,
       position,
       teamAbbr,
       weeklyPoints: playerPoints.weeklyPoints[playerId] || {},
       byeWeek,
-    };
-    setSelectedPlayer(playerData);
+    });
   };
-  
 
-  const closeModal = () => setSelectedPlayer(null);
+  const handleInfoClick = (playerId, playerName, position, teamAbbr) => {
+    const byeWeek = getTeamByeWeek(teamAbbr); // Ensure we get the correct bye week here
+    setInfoModalPlayer({
+      playerName,
+      position,
+      teamAbbr,
+      weeklyPoints: playerPoints.weeklyPoints[playerId] || {},
+      byeWeek,
+    });
+  };
+
+  const closeModal = () => {
+    setSelectedPlayer(null);
+    setInfoModalPlayer(null);
+  };
 
   if (loading) return <div className="text-center text-white text-xl mt-10">Loading your wack roster...</div>;
   if (error) return <div className="text-center text-xl mt-10 text-red-500">{error}</div>;
@@ -148,50 +149,54 @@ const TeamDetails = ({ leagueId }) => {
       <h1 className="text-3xl text-white font-bold mt-4">
         {teamName || roster?.settings?.team_name || 'Team Roster'}
       </h1>
-      <div className="flex">
-      <ul className="mt-6 space-y-4 w-full md:w-auto">
+      <div className='flex'>
+      <ul className="mt-6 space-y-4 p-2 w-full w-auto">
         {sortedPlayers.map(({ id, name, position, points, teamAbbr, text, bg, border }) => (
-          <li key={id} className="text-base md:text-lg text-white">
-            <div className="flex w-full items-start justify-between md:space-x-2">
-              <div className="md:flex-1 cursor-pointer" onClick={() => toggleDropdown(id)}>
-                <div className='flex'>
-                <span className="font-regular">{name} - </span> 
-                <span className="ml-1 text-[#fcfcfc] mr-4 font-semibold">{points !== '0.00' ? `${points} Pts` : 'Bye Week'}</span>
-                </div>
-                <div className='w-full mt-1 mb-1'>
-                <span className={`text-xs font-semibold ${text} ${bg} ${border} px-2 py-1`}>{position}</span> 
-                <span className="ml-1 text-xs text-gray-300">- for ({teamAbbr})</span>
+          <li key={id} className="text-base md:text-lg text-white flex items-start justify-between">
+            <div>
+              <span>{name} - {points} Pts</span>
+              <div className={`text-xs ${text} ${border} px-2 py-1 mt-1`}>
+              <span className={`${bg} px-2 py-1 rounded-md`}>{position}</span>
 
-                </div>
-              </div>
-              <div className="flex ml-4 items-center space-x-4">
-                <FaChartLine
-                  className="text-[#01F5BF] cursor-pointer hover:text-[#019977]"
-                  size={16}
-                  onClick={() => handleChartClick(id, name, teamAbbr, position)}
-                />
-                {openDropdowns[id] ? <FaChevronUp size={12} /> : <FaChevronDown size={12} />}
+              <span className='text-[#bbb]'> - for ({teamAbbr})</span>
+               
               </div>
             </div>
-            {openDropdowns[id] && (
-              <div className="mt-2 mb-8 ">
-                <PlayerWeeklyPoints playerId={id} weeklyPoints={playerPoints.weeklyPoints[id] || {}} />
-              </div>
-            )}
+            <div className="flex items-center space-x-4">
+              <FaInfoCircle
+                className="text-blue-400 cursor-pointer hover:text-blue-300"
+                onClick={() => handleInfoClick(id, name, position, teamAbbr)}
+              />
+              <FaChartLine
+                className="text-[#01F5BF] cursor-pointer hover:text-[#019977]"
+                onClick={() => handleChartClick(id, name, teamAbbr, position)}
+              />
+            </div>
           </li>
         ))}
       </ul>
       </div>
+
       {selectedPlayer && (
-       <PlayerChart
-       playerName={selectedPlayer.name}
-       position={selectedPlayer.position}
-       teamAbbr={selectedPlayer.teamAbbr}
-       weeklyPoints={selectedPlayer.weeklyPoints}
-       byeWeek={selectedPlayer.byeWeek}
-       onClose={closeModal}
-     />
-     
+        <PlayerChart
+          playerName={selectedPlayer.name}
+          position={selectedPlayer.position}
+          teamAbbr={selectedPlayer.teamAbbr}
+          weeklyPoints={selectedPlayer.weeklyPoints}
+          byeWeek={selectedPlayer.byeWeek}
+          onClose={closeModal}
+        />
+      )}
+
+      {infoModalPlayer && (
+        <PlayerWeeklyStats
+          playerName={infoModalPlayer.playerName}
+          position={infoModalPlayer.position}
+          teamAbbr={infoModalPlayer.teamAbbr}
+          weeklyPoints={infoModalPlayer.weeklyPoints}
+          byeWeek={infoModalPlayer.byeWeek}
+          onClose={closeModal}
+        />
       )}
     </div>
   );

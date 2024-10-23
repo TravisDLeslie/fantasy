@@ -93,13 +93,30 @@ export const getPlayerStats = async (season = '2024') => {
   export const getLeagueMatchups = async (leagueId, week) => {
     try {
       const response = await axios.get(`${BASE_URL}/league/${leagueId}/matchups/${week}`);
-      console.log(`Week ${week} Matchups Response:`, response.data); // Log the response
+      console.log(`Week ${week} Matchups Response:`, response.data);
+  
       if (!response.data || response.data.length === 0) {
-        console.warn(`No matchups found for week ${week}.`);
+        console.warn(`No matchups found for week ${week}. Returning empty array.`);
+        return [];
       }
+  
       return response.data;
     } catch (error) {
       console.error(`Error fetching matchups for week ${week}:`, error);
-      return []; // Return an empty array if the request fails
+      return []; // Ensure we return an empty array to prevent breaking the loop
+    }
+  };
+
+  export const getWeekStats = async (season, week) => {
+    try {
+      const response = await fetch(
+        `https://api.sleeper.app/v1/stats/nfl/${season}/${week}`
+      );
+      if (!response.ok) throw new Error('Failed to fetch stats');
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Error fetching week stats:', error);
+      return {};
     }
   };

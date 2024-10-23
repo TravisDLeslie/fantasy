@@ -22,11 +22,21 @@ const PlayerWeeklyStats = ({ playerName, position, teamAbbr, weeklyPoints = {}, 
 
   const { text, bg, border } = getPositionStyles(position);
 
-  // Helper to determine inactive or bye week status
-  const getWeekLabel = (week, points) => {
-    if (week === byeWeek) return `Week ${week}: Bye Week`;
-    if (points === 0 || points === undefined) return `Week ${week}: Inactive`;
-    return `Week ${week}: ${points.toFixed(2)}`;
+  // Helper function to generate week labels
+  const getWeekLabel = (week) => {
+    // If the week is the player's bye week, prioritize this label
+    if (week === parseInt(byeWeek)) {
+      return `Week ${week}: Bye Week`;
+    }
+
+    // Handle inactive weeks (points = 0 or undefined)
+    const points = weeklyPoints[week];
+    if (points === 0 || points === undefined) {
+      return `Week ${week}: Inactive`;
+    }
+
+    // Otherwise, display the points for the week
+    return `Week ${week}: ${points.toFixed(2)} pts`;
   };
 
   const validPoints = Object.values(weeklyPoints).filter((points) => points !== 0 && points !== undefined);
@@ -49,10 +59,9 @@ const PlayerWeeklyStats = ({ playerName, position, teamAbbr, weeklyPoints = {}, 
         <ul className="p-4 bg-[#202538] rounded-md max-h-80 overflow-y-auto">
           {Array.from({ length: currentWeek }, (_, i) => {
             const week = i + 1;
-            const points = weeklyPoints[week];
             return (
               <li key={week} className="text-white text-sm py-2 border-b border-gray-700">
-                {getWeekLabel(week, points)}
+                {getWeekLabel(week)}
               </li>
             );
           })}
