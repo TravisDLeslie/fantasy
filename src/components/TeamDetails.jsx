@@ -149,20 +149,17 @@ const TeamDetails = ({ leagueId }) => {
       <h1 className="text-3xl text-white font-bold mt-4">
         {teamName || roster?.settings?.team_name || 'Team Roster'}
       </h1>
-      <div className='flex'>
-      <ul className="mt-6 space-y-4 p-2 w-full w-auto">
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
         {sortedPlayers.map(({ id, name, position, points, teamAbbr, text, bg, border }) => (
-          <li key={id} className="text-base md:text-lg text-white flex items-start justify-between">
-            <div>
-              <span className='mr-6'>{name} - {points} Pts</span>
-              <div className={`text-xs ${text} ${border} px-2 py-1 mt-1`}>
-              <span className={`${bg} px-2 py-1 rounded-md`}>{position}</span>
-
-              <span className='text-[#bbb]'> - for ({teamAbbr})</span>
-               
-              </div>
+          <div key={id} className={`p-4 ${bg} ${border} shadow-md rounded-md`}>
+            <div className="flex items-center justify-between">
+              <span className={`font-semibold ${text}`}>{name}</span>
+              <span className="text-white">{points} Pts</span>
             </div>
-            <div className="flex items-center space-x-4">
+            <div className="mt-2 text-sm text-[#bbb]">
+              <span>{position}</span> - <span>({teamAbbr})</span>
+            </div>
+            <div className="mt-2 flex space-x-4">
               <FaInfoCircle
                 className="text-blue-400 cursor-pointer hover:text-blue-300"
                 onClick={() => handleInfoClick(id, name, position, teamAbbr)}
@@ -172,9 +169,8 @@ const TeamDetails = ({ leagueId }) => {
                 onClick={() => handleChartClick(id, name, teamAbbr, position)}
               />
             </div>
-          </li>
+          </div>
         ))}
-      </ul>
       </div>
 
       {selectedPlayer && (
