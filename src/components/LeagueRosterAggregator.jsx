@@ -25,6 +25,8 @@ const LeagueRosterAggregator = ({ leagueId }) => {
   const [error, setError] = useState(null);
   const [selectedPlayer, setSelectedPlayer] = useState(null);
   const [positionAverages, setPositionAverages] = useState({});
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [pinInput, setPinInput] = useState('');
 
   const calculateAveragePoints = (weeklyPoints) => {
     const validPoints = Object.values(weeklyPoints).filter((pts) => pts > 0);
@@ -94,7 +96,6 @@ const LeagueRosterAggregator = ({ leagueId }) => {
         })
       );
 
-      // Sort players by avgPoints in descending order
       const sortedPlayers = allPlayers.sort((a, b) => b.avgPoints - a.avgPoints);
 
       setPlayers(sortedPlayers);
@@ -109,8 +110,8 @@ const LeagueRosterAggregator = ({ leagueId }) => {
   };
 
   useEffect(() => {
-    fetchLeagueData();
-  }, [leagueId]);
+    if (isAuthenticated) fetchLeagueData();
+  }, [leagueId, isAuthenticated]);
 
   const handlePositionChange = (position) => {
     setPositionFilter(position);
@@ -124,8 +125,41 @@ const LeagueRosterAggregator = ({ leagueId }) => {
   const handleChartClick = (player) => setSelectedPlayer(player);
   const closeChart = () => setSelectedPlayer(null);
 
+  const handlePinSubmit = () => {
+    if (pinInput === '1234') {
+      setIsAuthenticated(true);
+    } else {
+      alert('Incorrect PIN!');
+    }
+  };
+
+  if (!isAuthenticated) {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center">
+        <div className="bg-[#252942] p-8 rounded shadow-lg">
+          <h2 className="text-white text-2xl font-bold mb-4">Enter PIN</h2>
+          <input
+            type="password"
+            value={pinInput}
+            onChange={(e) => setPinInput(e.target.value)}
+            className="w-full p-2 rounded mb-4"
+            placeholder="Enter PIN"
+          />
+          <button
+            onClick={handlePinSubmit}
+            className="w-full bg-[#01F5BF] hover:bg-[#019977] text-[#15182D] py-2 rounded"
+          >
+            Submit
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (loading) return <div className="text-center text-white text-xl mt-10">Loading league data...</div>;
   if (error) return <div className="text-center text-red-500 mt-10">{error}</div>;
+
+  const leagueAverage = positionFilter !== 'All' ? positionAverages[positionFilter] : null;
 
   return (
     <div className="container mx-auto p-6">
@@ -139,6 +173,12 @@ const LeagueRosterAggregator = ({ leagueId }) => {
           <FaSync className="inline-block mr-1" /> Refresh
         </button>
       </div>
+
+      {leagueAverage && (
+        <div className="text-center text-white mb-4">
+          {`${positionFilter} avg across league is: ${leagueAverage}`}
+        </div>
+      )}
 
       <div className="mb-4 flex justify-center space-x-4">
         {['All', ...Object.keys(positionStyles)].map((position) => {
