@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { FaChartLine, FaSync } from "react-icons/fa";
+import { FaChartLine, FaSync, FaSearch } from "react-icons/fa";
 import {
   getLeagueRosters,
   getPlayersMetadata,
@@ -8,6 +8,8 @@ import {
 } from "../api/sleeperApi";
 import useTeamByeWeeks from "../hooks/useTeamByeWeeks"; // Import the hook
 import PlayerChart from "./PlayerChart"; // Modal for detailed stats
+import TradeAnalyzer from "./TradeAnalyzer"; // Import the TradeAnalyzer
+
 
 // Helper: Calculate the current week of the season
 const getCurrentWeek = () => {
@@ -47,6 +49,9 @@ const LeagueRosterAggregator = ({ leagueId }) => {
   const [positionAverages, setPositionAverages] = useState({});
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [pinInput, setPinInput] = useState("");
+  const [isTradeAnalyzerOpen, setTradeAnalyzerOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState(""); // Add search query state
+
 
   const calculateAveragePoints = (weeklyPoints) => {
     const validPoints = Object.values(weeklyPoints).filter((pts) => pts > 0);
@@ -189,6 +194,14 @@ const LeagueRosterAggregator = ({ leagueId }) => {
     );
   };
 
+  const handleSearchChange = (e) => setSearchQuery(e.target.value);
+
+  const handleRefresh = () => {
+    setPositionFilter("All");
+    setSearchQuery(""); // Reset the search bar on refresh    // Reset to "All" when refreshing
+    fetchLeagueData();
+  };
+
   const handleChartClick = (player) => setSelectedPlayer(player);
   const closeChart = () => setSelectedPlayer(null);
 
@@ -223,6 +236,10 @@ const LeagueRosterAggregator = ({ leagueId }) => {
     );
   }
 
+  const openTradeAnalyzer = () => setTradeAnalyzerOpen(true);
+  const closeTradeAnalyzer = () => setTradeAnalyzerOpen(false);
+
+
   if (loading)
     return (
       <div className="text-center text-white text-xl mt-10">
@@ -234,9 +251,13 @@ const LeagueRosterAggregator = ({ leagueId }) => {
 
   const leagueAverage =
     positionFilter !== "All" ? positionAverages[positionFilter] : null;
+    
+    const renderedPositions = new Set(); // Declare the Set here to track rendered positions
+
 
   return (
     <div className="container mx-auto p-6">
+        
       <div className="flex justify-between items-center mb-4">
         <Link to="/" className="text-[#BCC3FF] hover:underline text-lg">
           ← Back to League
@@ -248,13 +269,27 @@ const LeagueRosterAggregator = ({ leagueId }) => {
         >
           {positionFilter} Players
         </h1>
+        <div className="space-x-6">
         <button
-          onClick={fetchLeagueData}
+          onClick={handleRefresh}
           className="text-[#15182D] bg-[#01F5BF] hover:bg-[#019977] px-3 py-2 rounded-full shadow"
         >
           <FaSync className="inline-block mr-1" /> Refresh
         </button>
+        {/* Trade Analyzer Button */}
+        <button
+            onClick={openTradeAnalyzer}
+            className="mt-2  text-[#15182D] bg-[#FEAE58] hover:bg-[#019977] px-3 py-2 rounded-full shadow"
+          >
+            Trade Analyzer
+          </button>
+          </div>
+        
+    
+
       </div>
+
+      
 
       {leagueAverage && (
         <div className="text-center mb-4 text-[#bbb]">
@@ -262,7 +297,7 @@ const LeagueRosterAggregator = ({ leagueId }) => {
         </div>
       )}
 
-      <div className="mb-4 flex justify-center space-x-4">
+      <div className="mb-12 flex justify-center space-x-4">
         {["All", ...Object.keys(positionStyles)].map((position) => {
           const { bg, text } = getPositionStyles(position);
 
@@ -282,12 +317,19 @@ const LeagueRosterAggregator = ({ leagueId }) => {
         })}
       </div>
 
+      
+
       <ul className="relative max-h-screen overflow-y-auto bg-[#252942] rounded p-12 space-y-4 shadow-md">
+
+        
+        
   {filteredPlayers.map((player, index) => {
     const { text, bg, border } = getPositionStyles(player.position);
     const leagueAvg = positionAverages[player.position] || "0.00";
     const rankDifference = (player.avgPoints - leagueAvg).toFixed(2);
     const rankLabel = rankDifference > 0 ? `+${rankDifference}` : rankDifference;
+
+    
 
     // Check if we should render the average line below this player
     const nextPlayerAvg =
@@ -295,8 +337,15 @@ const LeagueRosterAggregator = ({ leagueId }) => {
         ? filteredPlayers[index + 1].avgPoints
         : null;
 
+    // Only insert the average line once per position
     const shouldInsertAverageLine =
-      nextPlayerAvg !== null && leagueAvg > nextPlayerAvg && leagueAvg <= player.avgPoints;
+      !renderedPositions.has(player.position) &&  // Ensure it hasn't been rendered yet
+      (nextPlayerAvg === null || leagueAvg > nextPlayerAvg) &&
+      leagueAvg <= player.avgPoints;
+
+    if (shouldInsertAverageLine) {
+      renderedPositions.add(player.position); // Mark the position as rendered
+    }
 
     return (
       <React.Fragment key={player.id}>
@@ -311,8 +360,8 @@ const LeagueRosterAggregator = ({ leagueId }) => {
             {/* Player Name and Total Points */}
             <div className="flex items-center space-x-4">
               <span className="text-white font-semibold">{player.name}</span>
-              <span className="text-[#C0C0C0] font-normal">
-                ({player.points} pts)
+              <span className="text-[#C0C0C0] font-normal"> -
+              <span className="text-[#bbb] font-normal"> {player.points} pts </span>
               </span>
             </div>
           </span>
@@ -364,7 +413,9 @@ const LeagueRosterAggregator = ({ leagueId }) => {
   })}
 </ul>
 
-
+{isTradeAnalyzerOpen && (
+        <TradeAnalyzer players={players} onClose={closeTradeAnalyzer} />
+      )}
 
       {selectedPlayer && (
         <PlayerChart

@@ -1,29 +1,79 @@
-// src/components/TeamDetails.jsx
 import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { getLeagueRosters, getPlayersMetadata, getPlayerStats } from '../api/sleeperApi';
+import { useParams, Link, useLocation } from 'react-router-dom';
+import { FaChartLine, FaInfoCircle } from 'react-icons/fa';
+import { getLeagueRosters, getPlayersMetadata, getLeagueMatchups } from '../api/sleeperApi';
+import PlayerWeeklyStats from './PlayerWeeklyStats';
+import PlayerChart from './PlayerChart';
+import teamAbbreviations from '../utils/teamAbbreviations';
+import { useDefensePoints } from '../hooks/useDefensePoints';
+import useTeamByeWeeks from '../hooks/useTeamByeWeeks';
+
+const positionStyles = {
+  QB: { text: 'text-[#FC2B6D]', bg: 'bg-[#323655]', border: 'rounded-md' },
+  RB: { text: 'text-[#20CEB8]', bg: 'bg-[#323655]', border: 'rounded-md' },
+  WR: { text: 'text-[#56C9F8]', bg: 'bg-[#323655]', border: 'rounded-md' },
+  TE: { text: 'text-[#FEAE58]', bg: 'bg-[#323655]', border: 'rounded-md' },
+  K: { text: 'text-[#C96CFF]', bg: 'bg-[#323655]', border: 'rounded-md' },
+  DEF: { text: 'text-[#BF755D]', bg: 'bg-[#323655]', border: 'rounded-md' },
+  FLEX: { text: 'text-pink-900', bg: 'bg-[#323655]', border: 'rounded-md' },
+};
+
+const getPositionStyles = (position) =>
+  positionStyles[position] || { text: 'text-gray-900', bg: 'bg-gray-300', border: 'rounded' };
 
 const TeamDetails = ({ leagueId }) => {
   const { rosterId } = useParams();
+  const location = useLocation();
+  const { teamName, defensePoints } = location.state || {};
+
+  const { getDefensePoints } = useDefensePoints();
+  const { getTeamByeWeek } = useTeamByeWeeks();
+
   const [roster, setRoster] = useState(null);
   const [playersMetadata, setPlayersMetadata] = useState({});
-  const [playerStats, setPlayerStats] = useState({});
+  const [playerPoints, setPlayerPoints] = useState({});
+  const [selectedPlayer, setSelectedPlayer] = useState(null);
+  const [infoModalPlayer, setInfoModalPlayer] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchRosterAndPlayers = async () => {
+    const fetchData = async () => {
       try {
-        const [rosters, metadata, stats] = await Promise.all([
+        const [rosters, metadata] = await Promise.all([
           getLeagueRosters(leagueId),
           getPlayersMetadata(),
-          getPlayerStats(), // Fetch cumulative player stats
         ]);
 
         const team = rosters.find((r) => r.roster_id === parseInt(rosterId));
+        if (!team) throw new Error(`Team with roster ID ${rosterId} not found`);
+
         setRoster(team);
         setPlayersMetadata(metadata);
-        setPlayerStats(stats);
+
+        const totalPoints = {};
+        const weeklyPoints = {};
+        const processed = new Set();
+
+        const allMatchups = await Promise.all(
+          Array.from({ length: 17 }, (_, i) => getLeagueMatchups(leagueId, i + 1))
+        );
+
+        allMatchups.forEach((matchups, week) => {
+          matchups.forEach((matchup) => {
+            const points = matchup.players_points || {};
+            Object.entries(points).forEach(([playerId, weekPoints]) => {
+              if (!processed.has(`${playerId}-${week}`)) {
+                totalPoints[playerId] = (totalPoints[playerId] || 0) + weekPoints;
+                if (!weeklyPoints[playerId]) weeklyPoints[playerId] = {};
+                weeklyPoints[playerId][week + 1] = weekPoints;
+                processed.add(`${playerId}-${week}`);
+              }
+            });
+          });
+        });
+
+        setPlayerPoints({ totalPoints, weeklyPoints });
       } catch (err) {
         console.error('Error fetching data:', err);
         setError('Failed to load team roster. Please try again.');
@@ -32,61 +82,107 @@ const TeamDetails = ({ leagueId }) => {
       }
     };
 
-    fetchRosterAndPlayers();
+    fetchData();
   }, [leagueId, rosterId]);
 
-  if (loading) return <div className="text-center text-xl mt-10">Loading...</div>;
+  const handleChartClick = (playerId, playerName, teamAbbr, position) => {
+    const byeWeek = getTeamByeWeek(teamAbbr);
+    setSelectedPlayer({
+      id: playerId,
+      name: playerName,
+      position,
+      teamAbbr,
+      weeklyPoints: playerPoints.weeklyPoints[playerId] || {},
+      byeWeek,
+    });
+  };
+
+  const handleInfoClick = (playerId, playerName, position, teamAbbr) => {
+    const byeWeek = getTeamByeWeek(teamAbbr);
+    setInfoModalPlayer({
+      playerName,
+      position,
+      teamAbbr,
+      weeklyPoints: playerPoints.weeklyPoints[playerId] || {},
+      byeWeek,
+    });
+  };
+
+  const closeModal = () => {
+    setSelectedPlayer(null);
+    setInfoModalPlayer(null);
+  };
+
+  if (loading) return <div className="text-center text-white text-xl mt-10">Loading your wack roster...</div>;
   if (error) return <div className="text-center text-xl mt-10 text-red-500">{error}</div>;
 
-  // Sort players by their points (highest to lowest)
-  const sortedPlayers = [...roster.players].sort((a, b) => {
-    const pointsA = playerStats[a]?.pts_ppr ?? 0;
-    const pointsB = playerStats[b]?.pts_ppr ?? 0;
-    return pointsB - pointsA; // Descending order
-  });
+  const sortedPlayers = roster?.players?.map((playerId) => {
+    const isDefense = isNaN(playerId);
+    const playerData = playersMetadata[playerId] || {};
+    const playerName = isDefense
+      ? teamAbbreviations[playerId] || `Unknown Team (ID: ${playerId})`
+      : `${playerData.first_name || 'Unknown'} ${playerData.last_name || 'Player'}`;
+
+    const position = playerData?.position || 'N/A';
+    const rawPoints = isDefense
+      ? getDefensePoints(playerId, rosterId, defensePoints)
+      : playerPoints.totalPoints[playerId] || 0;
+
+    const teamAbbr = isDefense ? playerId : playerData.team;
+    const { text, bg, border } = getPositionStyles(position);
+
+    return {
+      id: playerId,
+      name: playerName,
+      position,
+      points: rawPoints.toFixed(2),
+      teamAbbr,
+      text,
+      bg,
+      border,
+    };
+  }).sort((a, b) => b.points - a.points);
 
   return (
     <div className="container mx-auto p-6">
-      <Link to="/" className="text-blue-500 hover:underline">← Back to League</Link>
-      <h1 className="text-3xl font-bold mt-4">Team Roster</h1>
-      <ul className="mt-6 space-y-2">
-        {sortedPlayers.map((playerId) => {
-          const player = playersMetadata[playerId];
-          const stats = playerStats[playerId];
+      <Link to="/" className="text-[#BCC3FF] hover:underline">← Back to League</Link>
+      <h1 className="text-3xl text-white font-bold mt-4">
+        {teamName || roster?.settings?.team_name || 'Team Roster'}
+      </h1>
 
-          const playerName = player
-            ? `${player.first_name} ${player.last_name}`
-            : `Unknown Player (ID: ${playerId})`;
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+        {sortedPlayers.map(({ id, name, position, points, teamAbbr, text, bg, border }) => (
+          <div key={id} className={`p-4 ${bg} ${border} shadow-md rounded-md`}>
+            <div className="flex items-center justify-between">
+              <span className={`font-semibold ${text}`}>{name}</span>
+              <span className="text-white">{points} Pts</span>
+            </div>
+            <div className="mt-2 text-sm text-[#bbb]">
+              <span>{position}</span> - <span>({teamAbbr})</span>
+            </div>
+            <div className="mt-2 flex space-x-4">
+              <FaInfoCircle
+                className="text-blue-400 cursor-pointer hover:text-blue-300"
+                onClick={() => handleInfoClick(id, name, position, teamAbbr)}
+              />
+              <FaChartLine
+                className="text-[#01F5BF] cursor-pointer hover:text-[#019977]"
+                onClick={() => handleChartClick(id, name, teamAbbr, position)}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
 
-          const points = stats?.pts_ppr ?? 'N/A'; // Show points or N/A
+      {selectedPlayer && (
+        <PlayerChart {...selectedPlayer} onClose={closeModal} />
+      )}
 
-          return (
-            <li key={playerId} className="text-lg">
-              {playerName} - <span className="text-gray-500">Points: {points}</span>
-            </li>
-          );
-        })}
-      </ul>
+      {infoModalPlayer && (
+        <PlayerWeeklyStats {...infoModalPlayer} onClose={closeModal} />
+      )}
     </div>
   );
 };
 
 export default TeamDetails;
-
-
-// Manual defense points fallback
-const manualDefensePoints = {
-  ARI: { 1: 10, 2: 12, 3: 8, 4: 7 },
-  DEN: { 1: 27, 2: 14, 3: 30, 4: 23, 5: 26, 6: 9, 7: 34 },
-  KC: { 1: 3, 2: 18, 3: 12, 4: 14, 5: 15 },
-  CHI: { 1: 38, 2: 14, 3: 11, 4: 17,  5: 27,  6: 22 },
-  MIN: { 1: 34, 2: 26, 3: 26, 4: 6,  5: 29, },
-  LAC:{ 1: 27, 2: 21, 3: 12, 4: 17,  6: 15 },
-  CIN:{ 1: 10, 2: 21, 3: 1, 4: 6, 5: 0,  6: 14 },
-  JAX:{ 1: 7, 2: 12, 3: 0, 4: 6, 5: 6,  6: 9 },
-  WAS:{ 1: -1, 2: 10, 3: -1, 4: 19, 5: 27,  6: -1 },
-  IND:{ 1: 6, 2: 8, 3: 22, 4: 13, 5: -4,  6: 11 },
-  BUF:{ 1: 13, 2: 26, 3: 26, 4: -2, 5: 7,  6: 14 },
-  PIT:{ 1: 23, 2: 22, 3: 22, 4: 7, 5: 17,  6: 24 },
-  PHI:{ 1: 2, 2: 5, 3: 15, 4: 2,  6: 18 },
-};
