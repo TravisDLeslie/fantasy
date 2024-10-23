@@ -154,7 +154,7 @@ const TeamDetails = ({ leagueId }) => {
         {sortedPlayers.map(({ id, name, position, points, teamAbbr, text, bg, border }) => (
           <li key={id} className="text-base md:text-lg text-white flex items-start justify-between">
             <div>
-              <span>{name} - {points} Pts</span>
+              <span className='mr-6'>{name} - {points} Pts</span>
               <div className={`text-xs ${text} ${border} px-2 py-1 mt-1`}>
               <span className={`${bg} px-2 py-1 rounded-md`}>{position}</span>
 

@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
+import { FaLock } from 'react-icons/fa'; // Import Lock Icon
+import { useNavigate } from 'react-router-dom'; // Import navigate function
 
 const Header = ({ onLeagueIdChange }) => {
   const [isModalOpen, setIsModalOpen] = useState(false); // Modal state
   const [inputLeagueId, setInputLeagueId] = useState(''); // Input state
+  const navigate = useNavigate(); // Use navigate function for page transitions
 
   const handleOpenModal = () => setIsModalOpen(true);
   const handleCloseModal = () => setIsModalOpen(false);
@@ -14,15 +17,29 @@ const Header = ({ onLeagueIdChange }) => {
     }
   };
 
+  const handlePlayerStatsClick = () => {
+    navigate('/players'); // Navigate to Player List Page
+  };
+
   return (
     <header className="bg-[#1F2233] p-4 flex justify-between items-center">
       <h1 className="text-3xl text-white font-bold">Edge</h1>
-      <button
-        className="px-4 py-2 bg-[#01F5BF] text-[#15182D] font-semibold rounded hover:bg-[#019977]"
-        onClick={handleOpenModal}
-      >
-        View Your League
-      </button>
+
+      <div className="flex space-x-4">
+        <button
+          className="px-4 py-2 bg-[#01F5BF] text-[#15182D] font-semibold rounded hover:bg-[#019977] flex items-center"
+          onClick={handlePlayerStatsClick}
+        >
+          <FaLock className="mr-2" /> Player Stats
+        </button>
+
+        <button
+          className="px-4 py-2 bg-[#01F5BF] text-[#15182D] font-semibold rounded hover:bg-[#019977]"
+          onClick={handleOpenModal}
+        >
+          View Your League
+        </button>
+      </div>
 
       {isModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center">
