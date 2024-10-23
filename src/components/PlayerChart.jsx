@@ -66,7 +66,7 @@ const PlayerChart = ({ playerName, position, teamAbbr, weeklyPoints = {}, byeWee
     datasets: [
       {
         label: 'Points per Week',
-        data,
+        data, 
         borderColor: '#01F5BF',
         borderWidth: 1,
         fill: true,
