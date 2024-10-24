@@ -373,7 +373,7 @@ const LeagueRosterAggregator = ({ leagueId }) => {
             <React.Fragment key={player.id}>
               {/* Player Card */}
               <li
-                className={`border-b border-gray-300 py-4 px-8 md:px-2 w-full flex flex-col md:flex-row mx-auto justify-between items-start md:items-center ${border} space-y-4 md:space-y-auto`}
+                className={`border-b border-gray-300 py-4 md:px-8 md:px-2 w-full flex flex-col md:flex-row mx-auto justify-between items-start md:items-center ${border} space-y-6 md:space-y-auto`}
               >
                 {/* Player Info */}
                 <div className="flex flex-col md:flex-row items-start md:items-center space-y-2 md:space-y-0 md:space-x-12">
@@ -383,15 +383,18 @@ const LeagueRosterAggregator = ({ leagueId }) => {
                     </span>
 
                     <div className="flex flex-row md:flex-row items-start md:items-center space-x-2">
+                      <div className="flex flex-col md:flex-row">
                       <span className="text-white font-semibold">
                         {player.name}
                       </span>
+                      <span className="md:ml-2 text-xs md:text-base text-[#8189C7] font-light">
+                          ({player.owner})
+                        </span>
+                        </div>
                       <span className="text-[#C0C0C0] font-normal">
                         -{" "}
                         <span className="text-[#bbb]">{player.points} pts</span>
-                        <span className="ml-2 text-[#8189C7] font-light">
-                          ({player.owner})
-                        </span>
+                        
                       </span>
                     </div>
                   </span>
