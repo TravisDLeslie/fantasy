@@ -283,7 +283,7 @@ const LeagueRosterAggregator = ({ leagueId }) => {
           to="/"
           className="text-[#BCC3FF] hover:underline text-base md:text-lg"
         >
-          ← Back to League
+          ←
         </Link>
 
         <div className="space-x-2 md:space-x-4 flex flex-row">
