@@ -286,17 +286,17 @@ const LeagueRosterAggregator = ({ leagueId }) => {
           ← Back to League
         </Link>
 
-        <div className="space-x-6">
+        <div className="space-x-2 md:space-x-4 flex flex-row">
           <button
             onClick={handleRefresh}
             className="text-[#15182D] text-xs font-semibold md:text-sm bg-[#01F5BF] hover:bg-[#019977] px-3 py-2 rounded-full shadow"
           >
-            <FaSync className="inline-block mr-1" /> Refresh
+            <FaSync className="inline-block mr-2" /> Refresh
           </button>
           {/* Trade Analyzer Button */}
           <button
             onClick={openTradeAnalyzer}
-            className="mt-2 text-xs md:text-sm font-semibold text-[#15182D] bg-[#FEAE58] hover:bg-[#019977] px-3 py-2 rounded-full shadow"
+            className=" text-xs md:text-sm font-semibold text-[#15182D] bg-[#FEAE58] hover:bg-[#019977] px-3 py-2 rounded-full shadow"
           >
             Trade Analyzer
           </button>
@@ -331,7 +331,7 @@ const LeagueRosterAggregator = ({ leagueId }) => {
                   className={`px-4 py-2 rounded ${
                     positionFilter === position
                       ? `${bg} ${text}`
-                      : "bg-gray-700 opacity-20 text-white"
+                      : "bg-gray-400 opacity-20 text-white"
                   }`}
                   onClick={() => handlePositionChange(position)}
                 >
