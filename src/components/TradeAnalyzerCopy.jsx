@@ -113,7 +113,7 @@ const TradeAnalyzer = ({ players, onClose, positionAverages = {} }) => {
           </button>
         </div>
 
-        <div className="flex space-x-8 mb-8">
+        <div className="flex space-x-8 h-full mb-8">
           {/* Giving Section */}
           <div
             className={`w-1/2 bg-[#3B3F5E] p-4 opacity-50 rounded ${
@@ -121,14 +121,14 @@ const TradeAnalyzer = ({ players, onClose, positionAverages = {} }) => {
             }`}
             onClick={() => setActiveSection("giving")}
           >
-            <div className="flex justify-between items-center mb-2">
+            <div className="flex justify-between items-center mb-4">
               <h3 className="text-[#01F5BF] text-lg font-semibold">Giving</h3>
               <FaSync
                 className="text-white cursor-pointer hover:text-[#019977]"
                 onClick={() => setGivingPlayers([])}
               />
             </div>
-            <div className="space-y-2 max-h-32 overflow-y-auto">
+            <div className="space-y-6 max-h-32 overflow-y-auto">
               {givingPlayers.map((player) => {
                 const { text, bg } = getPositionStyles(player.position);
 
@@ -161,24 +161,24 @@ const TradeAnalyzer = ({ players, onClose, positionAverages = {} }) => {
 
           {/* Getting Section */}
           <div
-            className={`w-1/2 bg-[#3B3F5E] opacity-50 p-4 rounded ${
+            className={`w-1/2 bg-[#3B3F5E] h-full opacity-50 p-4 rounded ${
               activeSection === "getting" ? "border-4 opacity-100 border-[#FEAE58]" : ""
             }`}
             onClick={() => setActiveSection("getting")}
           >
-            <div className="flex justify-between items-center mb-2">
+            <div className="flex justify-between  items-center mb-4">
               <h3 className="text-[#01F5BF] text-lg font-semibold">Getting</h3>
               <FaSync
                 className="text-white cursor-pointer hover:text-[#019977]"
                 onClick={() => setGettingPlayers([])}
               />
             </div>
-            <div className="space-y-2 max-h-32 overflow-y-auto">
+            <div className="space-y-6 max-h-32 overflow-y-auto">
               {gettingPlayers.map((player) => {
                 const { text, bg } = getPositionStyles(player.position);
 
                 return (
-                  <div key={player.id} className="text-white text-sm space-y-1">
+                  <div key={player.id} className="text-white text-sm space-y-2">
                     {player.name} ({player.teamAbbr}) -{" "}
                     <span className={`px-2 py-1 ${text} ${bg} rounded-md`}>
                       {player.position}

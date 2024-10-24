@@ -226,7 +226,7 @@ const TradeAnalyzer = ({ players, onClose, positionAverages = {} }) => {
 
          {/* Analyze Trade Button */}
          <button
-          onClick={onclick}
+          onClick={<TradeEvaluation />}
           className="w-full bg-[#01F5BF] hover:bg-[#019977] text-[#15182D] py-2 rounded font-bold mt-4"
         >
           Analyze Trade
