@@ -153,13 +153,13 @@ const TeamDetails = ({ leagueId }) => {
         {sortedPlayers.map(({ id, name, position, points, teamAbbr, text, bg, border }) => (
           <div key={id} className={`p-4 ${bg} ${border} shadow-md rounded-md`}>
             <div className="flex items-center justify-between">
-              <span className={`font-semibold ${text}`}>{name}</span>
-              <span className="text-white">{points} Pts</span>
+              <span className={`font-semibold text-sm md:text-base ${text}`}>{name}</span>
+              <span className="text-white text-sm md:text-base">{points} Pts</span>
             </div>
-            <div className="mt-2 text-sm text-[#bbb]">
+            <div className="mt-2 text-xs md:text-base text-[#bbb]">
               <span>{position}</span> - <span>({teamAbbr})</span>
             </div>
-            <div className="mt-2 flex space-x-4">
+            <div className="mt-4 flex justify-between">
               <FaInfoCircle
                 className="text-blue-400 cursor-pointer hover:text-blue-300"
                 onClick={() => handleInfoClick(id, name, position, teamAbbr)}
