@@ -33,6 +33,8 @@ const TeamDetails = ({ leagueId }) => {
   const [playersMetadata, setPlayersMetadata] = useState({});
   const [playerPoints, setPlayerPoints] = useState({});
   const [selectedPlayer, setSelectedPlayer] = useState(null);
+  const [infoLoading, setInfoLoading] = useState(false); // State for info loading
+
   const [infoModalPlayer, setInfoModalPlayer] = useState(null); // For the info modal
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -86,6 +88,7 @@ const TeamDetails = ({ leagueId }) => {
   }, [leagueId, rosterId]);
 
   const handleChartClick = (playerId, playerName, teamAbbr, position) => {
+    
     const byeWeek = getTeamByeWeek(teamAbbr);
     setSelectedPlayer({
       id: playerId,
@@ -97,16 +100,22 @@ const TeamDetails = ({ leagueId }) => {
     });
   };
 
-  const handleInfoClick = (playerId, playerName, position, teamAbbr) => {
-    const byeWeek = getTeamByeWeek(teamAbbr); // Ensure we get the correct bye week here
-    setInfoModalPlayer({
-      playerName,
-      position,
-      teamAbbr,
-      weeklyPoints: playerPoints.weeklyPoints[playerId] || {},
-      byeWeek,
-    });
+  const handleInfoClick = async (playerId, playerName, position, teamAbbr) => {
+    setInfoLoading(true); // Start loading
+    const byeWeek = getTeamByeWeek(teamAbbr);
+
+    setTimeout(() => { // Simulate async load (optional)
+      setInfoModalPlayer({
+        playerName,
+        position,
+        teamAbbr,
+        weeklyPoints: playerPoints.weeklyPoints[playerId] || {},
+        byeWeek,
+      });
+      setInfoLoading(false); // Stop loading
+    }, 500); // Adjust the delay as needed
   };
+
 
   const closeModal = () => {
     setSelectedPlayer(null);
@@ -160,10 +169,14 @@ const TeamDetails = ({ leagueId }) => {
               <span>{position}</span> - <span>({teamAbbr})</span>
             </div>
             <div className="mt-4 flex justify-between">
-              <FaInfoCircle
-                className="text-blue-400 cursor-pointer hover:text-blue-300"
-                onClick={() => handleInfoClick(id, name, position, teamAbbr)}
-              />
+            {infoLoading ? (
+                <span className="text-white text-sm">...loading</span>
+              ) : (
+                <FaInfoCircle
+                  className="text-blue-400 cursor-pointer hover:text-blue-300"
+                  onClick={() => handleInfoClick(id, name, position, teamAbbr)}
+                />
+              )}
               <FaChartLine
                 className="text-[#01F5BF] cursor-pointer hover:text-[#019977]"
                 onClick={() => handleChartClick(id, name, teamAbbr, position)}

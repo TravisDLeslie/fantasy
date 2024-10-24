@@ -1,18 +1,17 @@
 import React, { useEffect, useState, useRef } from "react";
 import { FaSync, FaSearch } from "react-icons/fa";
 
-const TradeAnalyzer = ({ players, onClose }) => {
+const TradeAnalyzer = ({ players, onClose, positionAverages = {} }) => {
   const [givingPlayers, setGivingPlayers] = useState([]);
   const [gettingPlayers, setGettingPlayers] = useState([]);
   const [givingSearch, setGivingSearch] = useState("");
   const [gettingSearch, setGettingSearch] = useState("");
-  const [filteredPlayers, setFilteredPlayers] = useState(players); // Manage all filtered players in one state
-  const [activeSection, setActiveSection] = useState("giving"); // Track which section is active
+  const [filteredPlayers, setFilteredPlayers] = useState(players); // Unified search pool
+  const [activeSection, setActiveSection] = useState("giving");
   const [tradeResult, setTradeResult] = useState(null);
 
-  const modalRef = useRef(); // Ref to detect outside clicks
+  const modalRef = useRef(); // Detect outside click
 
-  // Position styles - Same as LeagueRosterAggregator
   const positionStyles = {
     QB: { text: "text-[#FC2B6D]", bg: "bg-[#323655]", border: "rounded-md" },
     RB: { text: "text-[#20CEB8]", bg: "bg-[#323655]", border: "rounded-md" },
@@ -22,15 +21,33 @@ const TradeAnalyzer = ({ players, onClose }) => {
     DEF: { text: "text-[#BF755D]", bg: "bg-[#323655]", border: "rounded-md" },
   };
 
+  const calculateRankDifference = (avgPoints, position, positionAverages) => {
+    const leagueAvg = parseFloat(positionAverages[position] || "0.00");
+    const rankDifference = (avgPoints - leagueAvg).toFixed(2);
+    const rankLabel =
+      rankDifference > 0 ? `+${rankDifference}` : rankDifference;
+
+    return { rankDifference, rankLabel, leagueAvg };
+  };
+
   const getPositionStyles = (position) =>
-    positionStyles[position] || {
-      text: "text-gray-900",
-      bg: "bg-gray-300",
-      border: "rounded",
-    };
+    positionStyles[position] || { text: "text-gray-900", bg: "bg-gray-300" };
+
+  const getRankDifference = (player) => {
+    const leagueAvg = positionAverages?.[player.position] || 0;
+    const rankDifference = (player.avgPoints - leagueAvg).toFixed(2);
+    const rankLabel =
+      rankDifference > 0 ? `+${rankDifference}` : rankDifference;
+    return { rankDifference, rankLabel };
+  };
+
+  const calculateDifference = (player) => {
+    const leagueAvg = positionAverages?.[player.position] || 0;
+    return (player.avgPoints - leagueAvg).toFixed(2);
+  };
 
   useEffect(() => {
-    setFilteredPlayers(players); // Load all players initially
+    setFilteredPlayers(players); // Reset the search pool
   }, [players]);
 
   useEffect(() => {
@@ -43,11 +60,11 @@ const TradeAnalyzer = ({ players, onClose }) => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [onClose]);
 
-  const handlePlayerSearch = (query) => {
+  const handleSearch = (query) => {
     const filtered = players.filter((player) =>
       player.name.toLowerCase().includes(query.toLowerCase())
     );
-    setFilteredPlayers(filtered); // Update the filtered players list
+    setFilteredPlayers(filtered);
   };
 
   const handleSelectPlayer = (player) => {
@@ -74,6 +91,7 @@ const TradeAnalyzer = ({ players, onClose }) => {
       tradeBalance:
         totalGettingAvg - totalGivingAvg > 0 ? "Positive" : "Negative",
     };
+
     setTradeResult(result);
   };
 
@@ -95,90 +113,109 @@ const TradeAnalyzer = ({ players, onClose }) => {
           </button>
         </div>
 
-        {/* Giving and Getting Sections */}
         <div className="flex space-x-8 mb-8">
           {/* Giving Section */}
           <div
-            className={`w-1/2 bg-[#3B3F5E] p-4 rounded ${
-              activeSection === "giving" ? "border-2 border-[#fff]" : ""
+            className={`w-1/2 bg-[#3B3F5E] p-4 opacity-50 rounded ${
+              activeSection === "giving" ? "border-4 opacity-100 border-[#FEAE58]" : ""
             }`}
             onClick={() => setActiveSection("giving")}
           >
             <div className="flex justify-between items-center mb-2">
-              <h3 className="text-[#01F5BF] text-lg font-bold">Giving</h3>
+              <h3 className="text-[#01F5BF] text-lg font-semibold">Giving</h3>
               <FaSync
                 className="text-white cursor-pointer hover:text-[#019977]"
-                onClick={() => handleRefreshSection("giving")}
-              />
-            </div>
-            <div className="relative mb-4">
-              <FaSearch className="absolute top-3 left-3 text-gray-400" />
-              <input
-                type="text"
-                value={givingSearch}
-                onChange={(e) => {
-                  setGivingSearch(e.target.value);
-                  handlePlayerSearch(e.target.value); // Filter players on input
-                }}
-                placeholder="Search players..."
-                className="w-full p-2 pl-10 rounded"
+                onClick={() => setGivingPlayers([])}
               />
             </div>
             <div className="space-y-2 max-h-32 overflow-y-auto">
-              {givingPlayers.map((player) => (
-                <div key={player.id} className="text-white">
-                  {player.name} ({player.teamAbbr}) -{" "}
-                  <span className={`px-2 py-1 ${getPositionStyles(player.position).bg} rounded-md`}>
-                    {player.position}
-                  </span>{" "}
-                  - {player.avgPoints} Avg Pts
-                </div>
-              ))}
+              {givingPlayers.map((player) => {
+                const { text, bg } = getPositionStyles(player.position);
+
+                return (
+                  <div key={player.id} className="text-white text-sm space-y-1">
+                    {player.name} ({player.teamAbbr}) -{" "}
+                    <span className={`px-2 py-1 ${text} ${bg} rounded-md`}>
+                      {player.position}
+                    </span>{" "}
+                    - {player.avgPoints} Avg Pts{" "}
+                    <div className="">
+                      <span className="text-sm text-gray-300">
+                        Position (Avg: {player.leagueAvg})
+                      </span>
+                      <span
+                        className={`ml-2 font-semibold ${
+                          player.rankDifference >= 0
+                            ? "text-green-400"
+                            : "text-red-500"
+                        }`}
+                      >
+                        {player.rankLabel}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
           {/* Getting Section */}
           <div
-            className={`w-1/2 bg-[#3B3F5E] p-4 rounded ${
-              activeSection === "getting" ? "border-2 border-[#fff]" : ""
+            className={`w-1/2 bg-[#3B3F5E] opacity-50 p-4 rounded ${
+              activeSection === "getting" ? "border-4 opacity-100 border-[#FEAE58]" : ""
             }`}
             onClick={() => setActiveSection("getting")}
           >
             <div className="flex justify-between items-center mb-2">
-              <h3 className="text-[#01F5BF] text-lg font-bold">Getting</h3>
+              <h3 className="text-[#01F5BF] text-lg font-semibold">Getting</h3>
               <FaSync
                 className="text-white cursor-pointer hover:text-[#019977]"
-                onClick={() => handleRefreshSection("getting")}
-              />
-            </div>
-            <div className="relative mb-4">
-              <FaSearch className="absolute top-3 left-3 text-gray-400" />
-              <input
-                type="text"
-                value={gettingSearch}
-                onChange={(e) => {
-                  setGettingSearch(e.target.value);
-                  handlePlayerSearch(e.target.value); // Filter players on input
-                }}
-                placeholder="Search players..."
-                className="w-full p-2 pl-10 rounded"
+                onClick={() => setGettingPlayers([])}
               />
             </div>
             <div className="space-y-2 max-h-32 overflow-y-auto">
-              {gettingPlayers.map((player) => (
-                <div key={player.id} className="text-white">
-                  {player.name} ({player.teamAbbr}) -{" "}
-                  <span className={`px-2 py-1 ${getPositionStyles(player.position).bg} rounded-md`}>
-                    {player.position}
-                  </span>{" "}
-                  - {player.avgPoints} Avg Pts
-                </div>
-              ))}
+              {gettingPlayers.map((player) => {
+                const { text, bg } = getPositionStyles(player.position);
+
+                return (
+                  <div key={player.id} className="text-white text-sm space-y-1">
+                    {player.name} ({player.teamAbbr}) -{" "}
+                    <span className={`px-2 py-1 ${text} ${bg} rounded-md`}>
+                      {player.position}
+                    </span>{" "}
+                    - {player.avgPoints} Avg Pts{" "}
+                    <div className="">
+                      <span className="text-sm text-gray-200">
+                        Position (Avg: {player.leagueAvg})
+                      </span>
+                      <span
+                        className={`ml-2 font-semibold ${
+                          player.rankDifference >= 0
+                            ? "text-green-400"
+                            : "text-red-500"
+                        }`}
+                      >
+                        {player.rankLabel}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
 
-        {/* Player List */}
+        {/* Player Search */}
+        <div className="relative mb-4">
+          <FaSearch className="absolute top-3 left-3 text-gray-400" />
+          <input
+            type="text"
+            onChange={(e) => handleSearch(e.target.value)}
+            placeholder="Search players..."
+            className="w-full p-2 pl-10 rounded"
+          />
+        </div>
+
         <div className="mt-4 max-h-40 overflow-y-auto space-y-2">
           {filteredPlayers.map((player) => (
             <div
@@ -187,7 +224,11 @@ const TradeAnalyzer = ({ players, onClose }) => {
               onClick={() => handleSelectPlayer(player)}
             >
               {player.name} ({player.teamAbbr}) -{" "}
-              <span className={`px-2 py-1 ${getPositionStyles(player.position).bg} rounded-md`}>
+              <span
+                className={`px-2 py-1 ${
+                  getPositionStyles(player.position).bg
+                } rounded-md`}
+              >
                 {player.position}
               </span>{" "}
               - {player.avgPoints} Avg Pts
@@ -195,7 +236,6 @@ const TradeAnalyzer = ({ players, onClose }) => {
           ))}
         </div>
 
-        {/* Analyze Trade Button */}
         <button
           onClick={handleAnalyzeTrade}
           className="w-full bg-[#01F5BF] hover:bg-[#019977] text-[#15182D] py-2 rounded font-bold mt-4"
@@ -203,7 +243,6 @@ const TradeAnalyzer = ({ players, onClose }) => {
           Analyze Trade
         </button>
 
-        {/* Close Button */}
         <button
           onClick={onClose}
           className="p-4 mt-4 bg-red-500 hover:bg-red-600 text-white rounded"

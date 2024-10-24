@@ -81,15 +81,15 @@ const LeaguePage = ({ leagueId }) => {
       </div>
 
       {/* User List */}
-      <div className="w-full max-w-5xl">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="w-full max-w-5xl ">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 ">
           {rosters.map((roster) => {
             const user = users.find((u) => u.user_id === roster.owner_id);
             const teamName = getTeamName(roster, user);
 
             return (
               <Link to={`/team/${roster.roster_id}`} key={roster.roster_id}>
-                <div className="bg-[#252942] items-center p-6 shadow-lg rounded-lg hover:shadow-xl transition">
+                <div className="bg-[#252942] hover:bg-[#3B3F5E] items-center p-6 shadow-lg rounded-lg hover:shadow-xl transition">
                   {/* Flex layout with avatar on the left */}
                   <div className="flex items-center justify-center space-x-4 p-2">
   {/* Avatar */}
@@ -104,7 +104,7 @@ const LeaguePage = ({ leagueId }) => {
   />
 
   {/* User Info */}
-  <div className="flex- text-left md:text-left">
+  <div className="flex- text-left  md:text-left">
     <h2 className="text-lg md:text-xl font-semibold text-white">
       {user?.display_name || 'Unknown Owner'}
     </h2>

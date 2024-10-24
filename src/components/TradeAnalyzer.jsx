@@ -21,15 +21,23 @@ const TradeAnalyzer = ({ players, onClose, positionAverages = {} }) => {
     DEF: { text: "text-[#BF755D]", bg: "bg-[#323655]", border: "rounded-md" },
   };
 
-  
+  const calculateRankDifference = (avgPoints, position, positionAverages) => {
+    const leagueAvg = parseFloat(positionAverages[position] || "0.00");
+    const rankDifference = (avgPoints - leagueAvg).toFixed(2);
+    const rankLabel =
+      rankDifference > 0 ? `+${rankDifference}` : rankDifference;
+
+    return { rankDifference, rankLabel, leagueAvg };
+  };
 
   const getPositionStyles = (position) =>
     positionStyles[position] || { text: "text-gray-900", bg: "bg-gray-300" };
 
-   const getRankDifference = (player) => {
+  const getRankDifference = (player) => {
     const leagueAvg = positionAverages?.[player.position] || 0;
     const rankDifference = (player.avgPoints - leagueAvg).toFixed(2);
-    const rankLabel = rankDifference > 0 ? `+${rankDifference}` : rankDifference;
+    const rankLabel =
+      rankDifference > 0 ? `+${rankDifference}` : rankDifference;
     return { rankDifference, rankLabel };
   };
 
@@ -80,7 +88,8 @@ const TradeAnalyzer = ({ players, onClose, positionAverages = {} }) => {
     const result = {
       giving: totalGivingAvg.toFixed(2),
       getting: totalGettingAvg.toFixed(2),
-      tradeBalance: totalGettingAvg - totalGivingAvg > 0 ? "Positive" : "Negative",
+      tradeBalance:
+        totalGettingAvg - totalGivingAvg > 0 ? "Positive" : "Negative",
     };
 
     setTradeResult(result);
@@ -107,38 +116,43 @@ const TradeAnalyzer = ({ players, onClose, positionAverages = {} }) => {
         <div className="flex space-x-8 mb-8">
           {/* Giving Section */}
           <div
-            className={`w-1/2 bg-[#3B3F5E] p-4 rounded ${
-              activeSection === "giving" ? "border-2 border-[#fff]" : ""
+            className={`w-1/2 bg-[#3B3F5E] p-4 opacity-50 rounded ${
+              activeSection === "giving" ? "border-4 opacity-100 border-[#FEAE58]" : ""
             }`}
             onClick={() => setActiveSection("giving")}
           >
             <div className="flex justify-between items-center mb-2">
-              <h3 className="text-[#01F5BF] text-lg font-bold">Giving</h3>
+              <h3 className="text-[#01F5BF] text-lg font-semibold">Giving</h3>
               <FaSync
                 className="text-white cursor-pointer hover:text-[#019977]"
-                onClick={() => handleRefreshSection("giving")}
+                onClick={() => setGivingPlayers([])}
               />
             </div>
-
             <div className="space-y-2 max-h-32 overflow-y-auto">
               {givingPlayers.map((player) => {
-                const { rankLabel, rankDifference } = getRankDifference(player);
                 const { text, bg } = getPositionStyles(player.position);
 
                 return (
-                  <div key={player.id} className="text-white">
+                  <div key={player.id} className="text-white text-sm space-y-1">
                     {player.name} ({player.teamAbbr}) -{" "}
                     <span className={`px-2 py-1 ${text} ${bg} rounded-md`}>
                       {player.position}
                     </span>{" "}
                     - {player.avgPoints} Avg Pts{" "}
-                    <span
-                      className={`ml-2 font-semibold ${
-                        rankDifference >= 0 ? "text-green-400" : "text-red-500"
-                      }`}
-                    >
-                      {rankLabel}
-                    </span>
+                    <div className="">
+                      <span className="text-sm text-gray-300">
+                        Position (Avg: {player.leagueAvg})
+                      </span>
+                      <span
+                        className={`ml-2 font-semibold ${
+                          player.rankDifference >= 0
+                            ? "text-green-400"
+                            : "text-red-500"
+                        }`}
+                      >
+                        {player.rankLabel}
+                      </span>
+                    </div>
                   </div>
                 );
               })}
@@ -147,38 +161,43 @@ const TradeAnalyzer = ({ players, onClose, positionAverages = {} }) => {
 
           {/* Getting Section */}
           <div
-            className={`w-1/2 bg-[#3B3F5E] p-4 rounded ${
-              activeSection === "getting" ? "border-2 border-[#fff]" : ""
+            className={`w-1/2 bg-[#3B3F5E] opacity-50 p-4 rounded ${
+              activeSection === "getting" ? "border-4 opacity-100 border-[#FEAE58]" : ""
             }`}
             onClick={() => setActiveSection("getting")}
           >
             <div className="flex justify-between items-center mb-2">
-              <h3 className="text-[#01F5BF] text-lg font-bold">Getting</h3>
+              <h3 className="text-[#01F5BF] text-lg font-semibold">Getting</h3>
               <FaSync
                 className="text-white cursor-pointer hover:text-[#019977]"
-                onClick={() => handleRefreshSection("getting")}
+                onClick={() => setGettingPlayers([])}
               />
             </div>
-
             <div className="space-y-2 max-h-32 overflow-y-auto">
               {gettingPlayers.map((player) => {
-                const { rankLabel, rankDifference } = getRankDifference(player);
                 const { text, bg } = getPositionStyles(player.position);
 
                 return (
-                  <div key={player.id} className="text-white">
+                  <div key={player.id} className="text-white text-sm space-y-1">
                     {player.name} ({player.teamAbbr}) -{" "}
                     <span className={`px-2 py-1 ${text} ${bg} rounded-md`}>
                       {player.position}
                     </span>{" "}
                     - {player.avgPoints} Avg Pts{" "}
-                    <span
-                      className={`ml-2 font-semibold ${
-                        rankDifference >= 0 ? "text-green-400" : "text-red-500"
-                      }`}
-                    >
-                      {rankLabel}
-                    </span>
+                    <div className="">
+                      <span className="text-sm text-gray-200">
+                        Position (Avg: {player.leagueAvg})
+                      </span>
+                      <span
+                        className={`ml-2 font-semibold ${
+                          player.rankDifference >= 0
+                            ? "text-green-400"
+                            : "text-red-500"
+                        }`}
+                      >
+                        {player.rankLabel}
+                      </span>
+                    </div>
                   </div>
                 );
               })}
@@ -205,7 +224,11 @@ const TradeAnalyzer = ({ players, onClose, positionAverages = {} }) => {
               onClick={() => handleSelectPlayer(player)}
             >
               {player.name} ({player.teamAbbr}) -{" "}
-              <span className={`px-2 py-1 ${getPositionStyles(player.position).bg} rounded-md`}>
+              <span
+                className={`px-2 py-1 ${
+                  getPositionStyles(player.position).bg
+                } rounded-md`}
+              >
                 {player.position}
               </span>{" "}
               - {player.avgPoints} Avg Pts

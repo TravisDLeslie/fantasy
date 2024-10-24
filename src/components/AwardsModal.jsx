@@ -2,34 +2,34 @@ import React from "react";
 
 const awards = [
     { 
-      place: "1st Place", 
-      description: "🏆 Championship Belt & $1500 Cash Prize", 
+      place: "1st: 🏆", 
+      description: "Championship Belt & $1500 Cash Prize", 
       color: "text-yellow-400",
       text: "text-sm"
     },
     { 
-      place: "2nd Place", 
-      description: "🥈 $300 Cash Prize", 
-      color: "text-gray-300" ,
+      place: "2nd: 🥈", 
+      description: "$400 Cash Prize", 
+      color: "text-gray-100" ,
       text: "text-sm"
     },
     { 
-      place: "3rd Place", 
-      description: "🥉 $150 Cash Prize", 
+      place: "3rd: 🥉", 
+      description: "$200 Cash Prize", 
       color: "text-orange-400" ,
       text: "text-base"
     },
     { 
-      place: "Consolation Bracket", 
+      place: "Consolation:", 
       description: "1/2 Off Entry to Next Season", 
       color: "text-[#bbb]" ,
       text: "text-base"
     },
     { 
-      place: "Last Place", 
-      description: "🚗 Custom License Plate 'Worst Manager'", 
+      place: "Last 😩", 
+      description: "The License Plates", 
       drink: "Everyone's Favorite Drink up to $4", 
-      color: "text-red-500" ,
+      color: "text-[#fff]" ,
       text: "text-xs"
     },
   ];
@@ -67,11 +67,11 @@ const AwardsModal = ({ isOpen, onClose, sortedRosters, users }) => {
                 <span className={`text-sm font-semibold ${award.color} `}>
                   {award.place}
                 </span>
-                <div className="flex space-x-4 text-center">
-            {award.place === "Last Place" ? (
+                <div className="flex space-x-2 text-center">
+            {award.place === "Last 😩" ? (
               <>
-                <span className={`text-white leading-5 ${award.text}`}>1. - {award.description}</span>
-                <span className={`text-white leading-5 ${award.text}`}>2. - {award.drink}</span>
+                <span className={`text-white font-light text-left leading-5 ${award.text}`}>1. {award.description}</span>
+                <span className={`text-white font-light text-left leading-5 ${award.text}`}>2. {award.drink}</span>
               </>
             ) : (
               <span className="text-white">{award.description}</span>

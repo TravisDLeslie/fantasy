@@ -87,6 +87,15 @@ const LeagueRosterAggregator = ({ leagueId }) => {
   
     return normalizedPosition;
   };
+
+  const calculateRankDifference = (avgPoints, position, positionAverages) => {
+    const leagueAvg = parseFloat(positionAverages[position] || "0.00");
+    const rankDifference = (avgPoints - leagueAvg).toFixed(2);
+    const rankLabel = rankDifference > 0 ? `+${rankDifference}` : rankDifference;
+  
+    return { rankDifference, rankLabel, leagueAvg };
+  };
+  
   
 
   const calculatePositionAverages = (players) => {
@@ -113,16 +122,16 @@ const LeagueRosterAggregator = ({ leagueId }) => {
         getLeagueRosters(leagueId),
         getPlayersMetadata(),
       ]);
-
+  
       const allPlayers = [];
       const processed = new Set();
-
+  
       const allMatchups = await Promise.all(
         Array.from({ length: currentWeek }, (_, i) =>
           getLeagueMatchups(leagueId, i + 1)
         )
       );
-
+  
       allMatchups.forEach((matchups, week) => {
         matchups.forEach((matchup) => {
           const points = matchup.players_points || {};
@@ -136,40 +145,45 @@ const LeagueRosterAggregator = ({ leagueId }) => {
           });
         });
       });
-
+  
       rosters.forEach((roster) =>
         roster.players.forEach((playerId) => {
           const playerInfo = metadata[playerId] || {};
           const weeklyPoints = playerInfo.weekly_points || {};
           const avgPoints = calculateAveragePoints(weeklyPoints);
-
+  
           const { gamesPlayed, totalGamesPossible } = calculateGamesStats(
             weeklyPoints,
             playerInfo.team
           );
-
+  
+          const { rankDifference, rankLabel, leagueAvg } = calculateRankDifference(
+            avgPoints,
+            playerInfo.position,
+            positionAverages
+          );
+  
           allPlayers.push({
             id: playerId,
             name: `${playerInfo.first_name || "Unknown"} ${
               playerInfo.last_name || "Player"
             }`,
             position: playerInfo.position || "N/A",
-            points: Object.values(weeklyPoints)
-              .reduce((acc, pts) => acc + pts, 0)
-              .toFixed(2),
+            points: Object.values(weeklyPoints).reduce((acc, pts) => acc + pts, 0).toFixed(2),
             avgPoints,
             gamesPlayed,
             totalGamesPossible,
             weeklyPoints,
             teamAbbr: playerInfo.team || "N/A",
+            rankDifference,
+            rankLabel,
+            leagueAvg,
           });
         })
       );
-
-      const sortedPlayers = allPlayers.sort(
-        (a, b) => b.avgPoints - a.avgPoints
-      );
-
+  
+      const sortedPlayers = allPlayers.sort((a, b) => b.avgPoints - a.avgPoints);
+  
       setPlayers(sortedPlayers);
       setFilteredPlayers(sortedPlayers);
       setPositionAverages(calculatePositionAverages(sortedPlayers));
@@ -180,6 +194,7 @@ const LeagueRosterAggregator = ({ leagueId }) => {
       setLoading(false);
     }
   };
+  
 
   useEffect(() => {
     if (isAuthenticated) fetchLeagueData();
@@ -323,94 +338,80 @@ const LeagueRosterAggregator = ({ leagueId }) => {
 
         
         
-  {filteredPlayers.map((player, index) => {
-    const { text, bg, border } = getPositionStyles(player.position);
-    const leagueAvg = positionAverages[player.position] || "0.00";
-    const rankDifference = (player.avgPoints - leagueAvg).toFixed(2);
-    const rankLabel = rankDifference > 0 ? `+${rankDifference}` : rankDifference;
+      {filteredPlayers.map((player, index) => {
+  const { text, bg, border } = getPositionStyles(player.position);
 
-    
+  // Call the helper function to get rank difference details
+  const { rankDifference, rankLabel, leagueAvg } = calculateRankDifference(
+    player.avgPoints,
+    player.position,
+    positionAverages
+  );
 
-    // Check if we should render the average line below this player
-    const nextPlayerAvg =
-      index + 1 < filteredPlayers.length
-        ? filteredPlayers[index + 1].avgPoints
-        : null;
+  const nextPlayerAvg =
+    index + 1 < filteredPlayers.length
+      ? filteredPlayers[index + 1].avgPoints
+      : null;
 
-    // Only insert the average line once per position
-    const shouldInsertAverageLine =
-      !renderedPositions.has(player.position) &&  // Ensure it hasn't been rendered yet
-      (nextPlayerAvg === null || leagueAvg > nextPlayerAvg) &&
-      leagueAvg <= player.avgPoints;
+  const shouldInsertAverageLine =
+    !renderedPositions.has(player.position) &&
+    (nextPlayerAvg === null || leagueAvg > nextPlayerAvg) &&
+    leagueAvg <= player.avgPoints;
 
-    if (shouldInsertAverageLine) {
-      renderedPositions.add(player.position); // Mark the position as rendered
-    }
+  if (shouldInsertAverageLine) {
+    renderedPositions.add(player.position);
+  }
 
-    return (
-      <React.Fragment key={player.id}>
-        <li
-          className={`border-b border-gray-300 py-2 flex justify-between ${border}`}
-        >
-          <span className={`flex items-center ${text}`}>
-            <span className={`px-2 py-1 ${bg} rounded-md mr-2`}>
-              {player.position}
+  return (
+    <React.Fragment key={player.id}>
+      <li className={`border-b border-gray-300 py-2 flex justify-between ${border}`}>
+        <span className={`flex items-center ${text}`}>
+          <span className={`px-2 py-1 ${bg} rounded-md mr-2`}>{player.position}</span>
+
+          <div className="flex items-center space-x-4">
+            <span className="text-white font-semibold">{player.name}</span>
+            <span className="text-[#C0C0C0] font-normal">
+              - <span className="text-[#bbb] font-normal">{player.points} pts</span>
             </span>
+          </div>
+        </span>
 
-            {/* Player Name and Total Points */}
-            <div className="flex items-center space-x-4">
-              <span className="text-white font-semibold">{player.name}</span>
-              <span className="text-[#C0C0C0] font-normal"> -
-              <span className="text-[#bbb] font-normal"> {player.points} pts </span>
-              </span>
-            </div>
+        <div className="flex items-start justify-start space-x-12">
+          <span className="text-gray-500">
+            Played{" "}
+            <span className="text-[#BCC3FF] font-semibold">{player.gamesPlayed}</span> out of{" "}
+            <span className="text-[#fff] font-bold">{player.totalGamesPossible}</span> games
           </span>
 
-          {/* Player Stats Section */}
-          <div className="flex items-start justify-start space-x-12">
-            <span className="text-gray-500">
-              Played{" "}
-              <span className="text-[#BCC3FF] font-semibold">
-                {player.gamesPlayed}
-              </span>{" "}
-              out of{" "}
-              <span className="text-[#fff] font-bold">
-                {player.totalGamesPossible}
-              </span>
-              <span> games</span>
-            </span>
+          <span className="font-semibold text-white">{player.avgPoints} Avg Pts</span>
 
-            <span className="font-semibold text-white">
-              {player.avgPoints} Avg Pts
-            </span>
+          <span
+            className={`font-semibold ${
+              rankDifference >= 0 ? "text-green-400" : "text-red-500"
+            }`}
+          >
+            {rankLabel}
+          </span>
 
-            <span
-              className={`font-semibold ${
-                rankDifference >= 0 ? "text-green-400" : "text-red-500"
-              }`}
-            >
-              {rankLabel}
-            </span>
+          <FaChartLine
+            className="text-[#01F5BF] cursor-pointer hover:text-[#019977]"
+            onClick={() => handleChartClick(player)}
+          />
+        </div>
+      </li>
 
-            <FaChartLine
-              className="text-[#01F5BF] cursor-pointer hover:text-[#019977]"
-              onClick={() => handleChartClick(player)}
-            />
-          </div>
-        </li>
+      {shouldInsertAverageLine && (
+        <div className="relative">
+          <hr className="w-full border-t-[2px] border-[#FEAE58] my-2" />
+          <span className="absolute left-1/2 transform -translate-x-1/2 -mt-1 text-[#FEAE58] font-bold text-sm">
+            League Avg: {leagueAvg}
+          </span>
+        </div>
+      )}
+    </React.Fragment>
+  );
+})}
 
-        {/* Render the league average line if needed */}
-        {shouldInsertAverageLine && (
-          <div className="relative">
-            <hr className="w-full border-t-[2px] border-[#FEAE58] my-2" />
-            <span className="absolute left-1/2 transform -translate-x-1/2 -mt-1 text-[#FEAE58] font-bold text-sm">
-              League Avg: {leagueAvg}
-            </span>
-          </div>
-        )}
-      </React.Fragment>
-    );
-  })}
 </ul>
 
 {isTradeAnalyzerOpen && (
