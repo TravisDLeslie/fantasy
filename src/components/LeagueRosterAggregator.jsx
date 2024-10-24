@@ -429,8 +429,8 @@ const LeagueRosterAggregator = ({ leagueId }) => {
                     </div>
                     <div className="justify-left mt-2 md:mt-0">
                     <FaChartLine
-                      className="text-[#01F5BF] cursor-pointer hover:text-[#019977] w-12"
-                      onClick={() => handleChartClick(player)}
+  className="text-[#01F5BF] bg-[#3B3F5E] rounded-md cursor-pointer hover:text-[#019977] w-8 h-8 flex items-center justify-center p-2"
+  onClick={() => handleChartClick(player)}
                     />
                     </div>
                   </div>
