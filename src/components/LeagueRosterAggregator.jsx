@@ -331,7 +331,7 @@ const LeagueRosterAggregator = ({ leagueId }) => {
                   className={`px-4 py-2 rounded ${
                     positionFilter === position
                       ? `${bg} ${text}`
-                      : "bg-gray-400 opacity-20 text-white"
+                      : "bg-gray-500 opacity-50 text-white"
                   }`}
                   onClick={() => handlePositionChange(position)}
                 >
