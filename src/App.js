@@ -4,26 +4,27 @@ import LeaguePage from './components/LeaguePage';
 import TeamDetails from './components/TeamDetails';
 import Header from './components/Header';
 import LeagueRosterAggregator from './components/LeagueRosterAggregator';
+import PlayerStatsTester from './components/PlayerStatsTester'; // Import the tester
 import { getLeagueRosters } from './api/sleeperApi'; // Import API
 
 const App = () => {
   const [leagueId, setLeagueId] = useState('1130687436515831808'); // Default league ID
-  const [rosters, setRosters] = useState([]); // Store rosters here
+  const [rosters, setRosters] = useState([]); // Store rosters
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigate = useNavigate(); // Navigation for redirection
 
-  // Fetch league rosters when the league ID changes
+  // Fetch league rosters when leagueId changes
   useEffect(() => {
     const fetchRosters = async () => {
       try {
-        const rosterData = await getLeagueRosters(leagueId); // Fetch rosters from API
-        setRosters(rosterData); // Store rosters in state
+        const rosterData = await getLeagueRosters(leagueId);
+        setRosters(rosterData);
       } catch (err) {
         console.error('Error fetching rosters:', err);
         setError('Failed to load rosters.');
       } finally {
-        setLoading(false); // Stop loading indicator
+        setLoading(false);
       }
     };
 
@@ -43,8 +44,9 @@ const App = () => {
       <Header onLeagueIdChange={handleLeagueIdChange} />
       <Routes>
         <Route path="/" element={<LeaguePage leagueId={leagueId} />} />
-        <Route path="/team/:rosterId" element={<TeamDetails leagueId={leagueId} />} />
+        <Route path="/team/:rosterId" element={<TeamDetails leagueId={leagueId} rosters={rosters} />} />
         <Route path="/players" element={<LeagueRosterAggregator leagueId={leagueId} />} />
+        <Route path="/players-test" element={<PlayerStatsTester leagueId={leagueId} rosters={rosters} />} />
       </Routes>
     </div>
   );

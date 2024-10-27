@@ -1,63 +1,93 @@
 import { useState, useEffect } from 'react';
-import { getAllLeagueMatchups, getWeeklyPlayerStats } from '../api/sleeperApi';
+import { getLeagueMatchups, getWeeklyPlayerStats } from '../api/sleeperApi'; 
 
+/**
+ * Custom hook to fetch and aggregate player points per week.
+ * Ensures data is fetched correctly by retrying if needed.
+ */
 const usePlayerTotalPoints = (leagueId, season = '2024') => {
   const [playerPoints, setPlayerPoints] = useState({}); // Store player points and weekly data
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    const fetchPlayerPoints = async () => {
-      try {
-        const weeklyPoints = {}; // Stores total and weekly points per player
-        const processed = new Set(); // Track processed players to avoid duplication
+  // Helper: Fetch matchups for all weeks
+  const fetchAllMatchups = async () => {
+    try {
+      const allMatchups = await Promise.all(
+        Array.from({ length: 18 }, (_, i) => getLeagueMatchups(leagueId, i + 1))
+      );
+      return allMatchups;
+    } catch (err) {
+      console.error('Error fetching matchups:', err);
+      throw new Error('Failed to fetch league matchups.');
+    }
+  };
 
-        console.log('Fetching all matchups for league:', leagueId);
-        const allMatchups = await getAllLeagueMatchups(leagueId);
+  // Fetch all matchups and player stats
+  const fetchData = async () => {
+    try {
+      console.log('Fetching all matchups and player stats...');
 
-        console.log('Fetching weekly player stats...');
-        const allWeeklyStats = await getWeeklyPlayerStats(season);
+      const [allMatchups, allWeeklyStats] = await Promise.all([
+        fetchAllMatchups(),
+        getWeeklyPlayerStats(season),
+      ]);
 
-        console.log('Processing matchups and player stats...');
+      const aggregatedData = processMatchupsAndStats(allMatchups, allWeeklyStats);
+      setPlayerPoints(aggregatedData);
+    } catch (err) {
+      console.error('Error fetching player points:', err);
+      setError('Failed to fetch player points. Retrying...');
+      retryFetch();
+    } finally {
+      setLoading(false);
+    }
+  };
 
-        // Process each week of matchups
-        allMatchups.forEach((matchups, weekIndex) => {
-          matchups.forEach((matchup) => {
-            const { players = [], players_points = {} } = matchup;
+  // Retry fetching after a delay in case of errors
+  const retryFetch = () => {
+    setTimeout(() => {
+      console.log('Retrying fetch...');
+      fetchData();
+    }, 3000);
+  };
 
-            players.forEach((playerId) => {
-              const key = `${playerId}-${weekIndex + 1}`;
+  // Process both matchups and weekly stats to aggregate points
+  const processMatchupsAndStats = (matchups, weeklyStats) => {
+    const pointsData = {}; // Store total points and weekly breakdown
+    const processed = new Set(); // Track processed player-week pairs
 
-              if (!processed.has(key)) {
-                if (!weeklyPoints[playerId]) {
-                  weeklyPoints[playerId] = { totalPoints: 0, weeklyPoints: {} };
-                }
+    matchups.forEach((weekMatchups, weekIndex) => {
+      weekMatchups.forEach(({ players = [], players_points = {} }) => {
+        players.forEach((playerId) => {
+          const key = `${playerId}-${weekIndex + 1}`;
 
-                // Get points from matchup or fallback to weekly player stats
-                const weekPoints =
-                  players_points[playerId] || allWeeklyStats[playerId]?.[weekIndex + 1]?.fantasy_points || 0;
+          if (!processed.has(key)) {
+            if (!pointsData[playerId]) {
+              pointsData[playerId] = { totalPoints: 0, weeklyPoints: {} };
+            }
 
-                // Store points
-                weeklyPoints[playerId].totalPoints += weekPoints;
-                weeklyPoints[playerId].weeklyPoints[weekIndex + 1] = weekPoints;
+            const matchupPoints = players_points[playerId] || 0;
+            const statPoints = weeklyStats[playerId]?.[weekIndex + 1]?.fantasy_points || 0;
 
-                processed.add(key);
-              }
-            });
-          });
+            // Use the higher value between matchup and stat points
+            const finalPoints = Math.max(matchupPoints, statPoints);
+
+            pointsData[playerId].totalPoints += finalPoints;
+            pointsData[playerId].weeklyPoints[weekIndex + 1] = finalPoints;
+
+            processed.add(key);
+          }
         });
+      });
+    });
 
-        console.log('Aggregated Player Points:', weeklyPoints);
-        setPlayerPoints(weeklyPoints);
-      } catch (err) {
-        console.error('Error fetching player points:', err);
-        setError('Failed to fetch player points.');
-      } finally {
-        setLoading(false);
-      }
-    };
+    console.log('Aggregated Player Points:', pointsData);
+    return pointsData;
+  };
 
-    fetchPlayerPoints();
+  useEffect(() => {
+    fetchData();
   }, [leagueId, season]);
 
   return { playerPoints, loading, error };

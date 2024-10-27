@@ -6,6 +6,8 @@ import {
   getPlayersMetadata,
   getLeagueMatchups,
   getLeagueUsers,
+  getAllPlayers,
+  getAllPlayerPoints,
 } from "../api/sleeperApi";
 import useTeamByeWeeks from "../hooks/useTeamByeWeeks"; // Import the hook
 import PlayerChart from "./PlayerChart"; // Modal for detailed stats
@@ -118,10 +120,12 @@ const LeagueRosterAggregator = ({ leagueId }) => {
   const fetchLeagueData = async () => {
     try {
       setLoading(true);
-      const [rosters, metadata, usersData] = await Promise.all([
+      const [rosters, metadata, usersData, allPlayersData] = await Promise.all([
         getLeagueRosters(leagueId),
         getPlayersMetadata(),
         getLeagueUsers(leagueId),
+        getAllPlayers(),
+        getAllPlayerPoints(leagueId),
       ]);
 
       const allPlayers = [];
@@ -146,6 +150,9 @@ const LeagueRosterAggregator = ({ leagueId }) => {
           });
         });
       });
+
+      
+      
 
       rosters.forEach((roster) =>
         roster.players.forEach((playerId) => {
@@ -313,7 +320,7 @@ const LeagueRosterAggregator = ({ leagueId }) => {
 
         {leagueAverage && (
           <div className="text-[#bbb]">
-            <span>avg across league is: </span>
+            <span>avg across league starters is: </span>
             <span className="text-white">{leagueAverage}</span>
           </div>
         )}
