@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef } from 'react';
 import { Line } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -11,7 +11,15 @@ import {
   LinearScale,
 } from 'chart.js';
 
-ChartJS.register(Title, Tooltip, Legend, LineElement, PointElement, CategoryScale, LinearScale);
+ChartJS.register(
+  Title,
+  Tooltip,
+  Legend,
+  LineElement,
+  PointElement,
+  CategoryScale,
+  LinearScale
+);
 
 const positionStyles = {
   QB: { text: 'text-[#FC2B6D]', bg: 'bg-[#323655]', border: 'rounded-md' },
@@ -23,13 +31,21 @@ const positionStyles = {
   FLEX: { text: 'text-pink-900', bg: 'bg-[#323655]', border: 'rounded-md' },
 };
 
-const getPositionStyles = (position) => positionStyles[position] || { 
-  text: 'text-gray-900', 
-  bg: 'bg-gray-300', 
-  border: 'rounded' 
-};
+const getPositionStyles = (position) =>
+  positionStyles[position] || {
+    text: 'text-gray-900',
+    bg: 'bg-gray-300',
+    border: 'rounded',
+  };
 
-const PlayerChart = ({ playerName, position, teamAbbr, weeklyPoints = {}, byeWeek, onClose }) => {
+const PlayerChart = ({
+  playerName,
+  position,
+  teamAbbr,
+  weeklyPoints = {},
+  byeWeek,
+  onClose,
+}) => {
   const chartRef = useRef();
 
   const labels = [];
@@ -37,12 +53,16 @@ const PlayerChart = ({ playerName, position, teamAbbr, weeklyPoints = {}, byeWee
 
   const now = new Date();
   const currentWeek = Math.min(
-    Math.ceil((now - new Date(now.getFullYear(), 8, 7)) / (7 * 24 * 60 * 60 * 1000)),
+    Math.ceil(
+      (now - new Date(now.getFullYear(), 8, 7)) / (7 * 24 * 60 * 60 * 1000)
+    ),
     17
   );
 
   const shouldExcludeWeek = (week) =>
-    week === byeWeek || weeklyPoints[week] === 0 || weeklyPoints[week] === undefined;
+    week === byeWeek ||
+    weeklyPoints[week] === 0 ||
+    weeklyPoints[week] === undefined;
 
   Array.from({ length: currentWeek }, (_, i) => i + 1).forEach((week) => {
     labels.push(
@@ -57,7 +77,10 @@ const PlayerChart = ({ playerName, position, teamAbbr, weeklyPoints = {}, byeWee
 
   const validPoints = data.filter((points) => points !== null);
   const totalPoints = validPoints.reduce((total, pts) => total + pts, 0);
-  const avgPoints = validPoints.length > 0 ? (totalPoints / validPoints.length).toFixed(2) : '0.00';
+  const avgPoints =
+    validPoints.length > 0
+      ? (totalPoints / validPoints.length).toFixed(2)
+      : '0.00';
   const minPoints = Math.min(...validPoints);
   const maxPoints = Math.max(...validPoints);
 
@@ -66,14 +89,14 @@ const PlayerChart = ({ playerName, position, teamAbbr, weeklyPoints = {}, byeWee
     datasets: [
       {
         label: 'Points per Week',
-        data, 
+        data,
         borderColor: '#01F5BF',
         borderWidth: 1,
         fill: true,
         spanGaps: true,
-        lineTension: 0.3,
+        tension: 0.3,
         pointBackgroundColor: data.map((value) =>
-          value === minPoints ? '#fff' : value === maxPoints ? '#BCC3FF' : '#BCC3FF'
+          value === minPoints || value === maxPoints ? '#fff' : '#BCC3FF'
         ),
       },
       {
@@ -82,8 +105,8 @@ const PlayerChart = ({ playerName, position, teamAbbr, weeklyPoints = {}, byeWee
         borderColor: '#E77C09',
         borderWidth: 2,
         borderDash: [2, 5],
-        fill: true,
-        lineTension: 0.5,
+        fill: false,
+        tension: 0.5,
       },
     ],
   };
@@ -106,6 +129,14 @@ const PlayerChart = ({ playerName, position, teamAbbr, weeklyPoints = {}, byeWee
     },
     plugins: {
       legend: { labels: { color: '#fff', font: { size: 14 } } },
+      title: {
+        display: false,
+        text: playerName || 'Player Chart',
+        color: '#ffffff',
+        font: {
+          size: 18,
+        },
+      },
       tooltip: {
         callbacks: {
           label: (context) => {
@@ -123,6 +154,7 @@ const PlayerChart = ({ playerName, position, teamAbbr, weeklyPoints = {}, byeWee
     animation: {
       onComplete: () => {
         const chart = chartRef.current;
+        if (!chart) return;
         const { ctx, scales } = chart;
         const xScale = scales.x;
         const yScale = scales.y;
@@ -175,13 +207,24 @@ const PlayerChart = ({ playerName, position, teamAbbr, weeklyPoints = {}, byeWee
   const { text, bg, border } = getPositionStyles(position);
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-      <div className="bg-[#15182D] p-4 md:p-8 rounded shadow-lg max-w-2xl w-full">
-        <h2 className="flex flex-col items-center text-center text-gray-200 font-regular mb-4 mt-2">
-          <span>{playerName} - <span className="text-sm text-white font-semibold">{totalPoints.toFixed(2)} Pts</span></span>
-          <div className='flex items-center'>
-          <span className={`text-xs ${text} ${bg} ${border} px-2 py-1 mt-2`}>{position}</span>
-          <span className="text-xs ml-2 text-gray-300 mt-1">- for ({teamAbbr})</span>
+    <div className="fixed inset-0 bg-black bg-opacity-50 rounded-2xl flex items-center justify-center">
+      <div className="bg-[#252942] p-4 md:p-8 rounded shadow-lg max-w-2xl w-full">
+        <h2 className="flex flex-col items-center text-center text-gray-200 font-regular mb-1 mt-2">
+          <span className="text-[#fff]">
+            {playerName} -
+            <span className="text-sm text-white font-semibold">
+              {totalPoints.toFixed(2)} Pts
+            </span>
+          </span>
+          <div className="flex items-center">
+            <span
+              className={`text-xs ${text} ${bg} ${border} px-2 py-1 mt-2`}
+            >
+              {position}
+            </span>
+            <span className="text-xs ml-2 text-gray-300 mt-1">
+              - for ({teamAbbr})
+            </span>
           </div>
         </h2>
 
@@ -189,7 +232,10 @@ const PlayerChart = ({ playerName, position, teamAbbr, weeklyPoints = {}, byeWee
           <Line ref={chartRef} data={chartData} options={chartOptions} />
         </div>
 
-        <button onClick={onClose} className="mt-4 px-4 py-2 bg-red-500 text-white rounded">
+        <button
+          onClick={onClose}
+          className="mt-4 px-4 py-2 bg-red-500 text-white rounded"
+        >
           Close
         </button>
       </div>

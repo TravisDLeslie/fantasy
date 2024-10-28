@@ -36,8 +36,20 @@ export const getPlayersMetadata = () =>
   fetchData(`${BASE_URL}/players/nfl`);
 
 /** Fetch season cumulative stats */
-export const getPlayerStats = (season = '2024') =>
-  fetchData(`${BASE_URL}/stats/nfl/regular/${season}?grouping=season`);
+/** Fetch player stats for a specific week and season */
+export const getPlayerStats = async (season, week) => {
+  try {
+    const response = await fetch(`https://api.sleeper.app/v1/stats/nfl/regular/${season}/${week}`);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch player stats for week ${week}`);
+    }
+    const data = await response.json();
+    return data; // Returns an object with player IDs as keys and their stats as values
+  } catch (error) {
+    console.error(`Error fetching player stats for week ${week}:`, error);
+    return {}; // Return an empty object in case of error to prevent crashes
+  }
+};
 
 /** Fetch weekly player stats and flatten them */
 export const getWeeklyPlayerStats = async (season = '2024') => {
@@ -56,14 +68,15 @@ export const getWeeklyPlayerStats = async (season = '2024') => {
 
 /** Fetch matchups for a specific week */
 export const getLeagueMatchups = async (leagueId, week) => {
-  const response = await fetch(
-    `https://api.sleeper.app/v1/league/${leagueId}/matchups/${week}`
-  );
-  if (!response.ok) {
-    throw new Error(`Failed to fetch matchups for week ${week}`);
+  try {
+    const response = await axios.get(`${BASE_URL}/league/${leagueId}/matchups/${week}`);
+    return response.data;
+  } catch (error) {
+    console.error(`Failed to fetch matchups for week ${week}:`, error);
+    return null; // Return null or an empty array to avoid breaking the loop
   }
-  return await response.json();
 };
+
 
 /** Fetch and aggregate player points for a league */
 export const getAllPlayerPoints = async (leagueId) => {
@@ -131,11 +144,13 @@ export const getPlayerMatchupStats = async (season, week) => {
 };
 
 /** Fetch NFL schedule for all teams (if available) */
+/** Fetch NFL schedule for all teams */
 export const getSchedule = async (season = '2024') => {
   const data = await fetchData(`${BASE_URL}/nfl/schedule/${season}`, []);
   console.log('Fetched NFL Schedule:', data); // For debugging
   return data;
 };
+
 
 
 export const getNFLState = async () => {
@@ -145,3 +160,4 @@ export const getNFLState = async () => {
   }
   return await response.json();
 };
+

@@ -258,7 +258,7 @@ const LeaguePage = ({ leagueId }) => {
           onClick={() => setIsAwardsOpen(true)}
           className="bg-[#252942] text-white px-6 py-3 rounded-full shadow-lg hover:bg-[#e69f45] transition"
         >
-          🏅 View Awards
+          🏅 View Prizes
         </button>
       </div>
 

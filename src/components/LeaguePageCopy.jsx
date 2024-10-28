@@ -19,6 +19,7 @@ const LeaguePage = ({ leagueId }) => {
   const [error, setError] = useState(null);
   const [isAwardsOpen, setIsAwardsOpen] = useState(false);
   const [openRosterId, setOpenRosterId] = useState(null);
+  const [sortOption, setSortOption] = useState("winLoss"); // Default sorting option
 
   const getResultColorClass = (result) => {
     switch (result) {
@@ -51,10 +52,6 @@ const LeaguePage = ({ leagueId }) => {
 
         let currentWeek = nflState.week || 1;
 
-        // Adjust currentWeek if necessary
-        // For example, if you know that the API is one week behind
-        // currentWeek = currentWeek + 1;
-
         // Create a mapping from roster_id to team and owner names
         const rosterIdToTeamInfo = {};
         rosterData.forEach((roster) => {
@@ -72,7 +69,6 @@ const LeaguePage = ({ leagueId }) => {
           ? info.settings.playoff_week_start - 1
           : 13;
 
-        // Fetch matchups including the current week
         for (let week = 1; week <= currentWeek; week++) {
           matchupPromises.push(getLeagueMatchups(leagueId, week));
         }
@@ -185,15 +181,52 @@ const LeaguePage = ({ leagueId }) => {
     fetchData();
   }, [leagueId]);
 
-  const sortedRosters = [...rosters].sort((a, b) => {
-    if (b.settings.wins !== a.settings.wins) {
-      return b.settings.wins - a.settings.wins;
-    }
-    return a.settings.losses - b.settings.losses;
-  });
-
+  // Function to get the team name
   const getTeamName = (roster, user) =>
     roster.settings.team_name || user?.metadata?.team_name || "Unnamed Team";
+
+  // Function to handle sorting based on selected criteria
+  const handleSortChange = (e) => {
+    setSortOption(e.target.value);
+  };
+
+  const getSortedRosters = () => {
+    return [...rosters].sort((a, b) => {
+      switch (sortOption) {
+        case "mostPF":
+          return (
+            (pointsForAgainst[b.roster_id]?.PF || 0) -
+            (pointsForAgainst[a.roster_id]?.PF || 0)
+          );
+        case "mostPA":
+          return (
+            (pointsForAgainst[b.roster_id]?.PA || 0) -
+            (pointsForAgainst[a.roster_id]?.PA || 0)
+          );
+        case "winLoss":
+          if (b.settings.wins !== a.settings.wins) {
+            return b.settings.wins - a.settings.wins;
+          }
+          return a.settings.losses - b.settings.losses;
+        case "leagueStandings":
+        default:
+          // First sort by Wins
+          if (b.settings.wins !== a.settings.wins) {
+            return b.settings.wins - a.settings.wins;
+          }
+          // Then sort by Losses (lower losses are better)
+          if (a.settings.losses !== b.settings.losses) {
+            return a.settings.losses - b.settings.losses;
+          }
+          // Finally, sort by Points For (PF) in descending order
+          return (
+            (pointsForAgainst[b.roster_id]?.PF || 0) -
+            (pointsForAgainst[a.roster_id]?.PF || 0)
+          );
+      }
+    });
+  };
+  
 
   if (loading) {
     return (
@@ -217,6 +250,8 @@ const LeaguePage = ({ leagueId }) => {
       </h1>
       <h2 className="text-center text-white mb-8">Where the neggin is real!</h2>
 
+     
+
       {/* Centered View Awards Button */}
       <div className="flex items-center justify-center h-12 mb-10">
         <button
@@ -227,10 +262,25 @@ const LeaguePage = ({ leagueId }) => {
         </button>
       </div>
 
+       {/* Filter Controls */}
+       <div className="mb-6">
+        <label className="text-white mr-4">Sort By:</label>
+        <select
+          value={sortOption}
+          onChange={handleSortChange}
+          className="bg-[#252942] text-white p-2 rounded-md"
+        >
+          <option value="leagueStandings">League Standings</option>
+          <option value="winLoss">Win / Loss Record</option>
+          <option value="mostPF">Most Points For (PF)</option>
+          <option value="mostPA">Most Points Against (PA)</option>
+        </select>
+      </div>
+
       {/* User List */}
       <div className="w-full max-w-5xl">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {rosters.map((roster) => {
+          {getSortedRosters().map((roster) => {
             const user = users.find((u) => u.user_id === roster.owner_id);
             const teamName = getTeamName(roster, user);
 
@@ -362,7 +412,7 @@ const LeaguePage = ({ leagueId }) => {
       <AwardsModal
         isOpen={isAwardsOpen}
         onClose={() => setIsAwardsOpen(false)}
-        sortedRosters={sortedRosters}
+        sortedRosters={getSortedRosters()}
         users={users}
       />
     </div>

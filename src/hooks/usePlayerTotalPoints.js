@@ -9,6 +9,7 @@ const usePlayerTotalPoints = (leagueId, season = '2024') => {
   const [playerPoints, setPlayerPoints] = useState({}); // Store player points and weekly data
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
 
   // Helper: Fetch matchups for all weeks
   const fetchAllMatchups = async () => {

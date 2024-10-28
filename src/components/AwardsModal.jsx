@@ -2,19 +2,19 @@ import React from "react";
 
 const awards = [
     { 
-      place: "1st: 🏆", 
+      place: "1: 🏆", 
       description: "Championship Belt & $1500 Cash Prize", 
       color: "text-yellow-400",
       text: "text-sm"
     },
     { 
-      place: "2nd: 🥈", 
+      place: "2: 🥈", 
       description: "$400 Cash Prize", 
       color: "text-gray-100" ,
       text: "text-sm"
     },
     { 
-      place: "3rd: 🥉", 
+      place: "3: 🥉", 
       description: "$200 Cash Prize", 
       color: "text-orange-400" ,
       text: "text-base"
@@ -46,7 +46,7 @@ const AwardsModal = ({ isOpen, onClose, sortedRosters, users }) => {
     <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
       <div className="bg-[#252942] p-6 rounded-lg shadow-lg max-w-lg w-full">
         <h2 className="text-xl text-center text-white font-semibold mb-4">
-          🏅 League Awards
+          🏅 League Prizes
         </h2>
         <ul className="space-y-3">
           {awards.map((award, index) => {
