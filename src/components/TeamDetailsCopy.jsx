@@ -60,7 +60,7 @@ const positionStyles = {
 const getPositionStyles = (position) =>
   positionStyles[position] || {
     text: "text-gray-900",
-    bg: "bg-gray-300",
+    bg: "bg-{gray-300}",
     border: "rounded",
   };
 
@@ -238,6 +238,13 @@ const TeamDetails = ({ leagueId }) => {
 
     return matchups;
   };
+
+  useEffect(() => {
+    if (currentWeek) {
+      setSelectedWeekTeamPoints(currentWeek);
+    }
+  }, [currentWeek]);
+  
 
   const determineMatchupResult = (
     teamMatchup,
@@ -432,6 +439,7 @@ const TeamDetails = ({ leagueId }) => {
   }));
 
   
+  
 
   return (
 
@@ -445,95 +453,7 @@ const TeamDetails = ({ leagueId }) => {
       </h1>
 
       
-{/* Left Column - Swiper Component */}
-<div className="col-span-3 z-0 max-h-auto relative">
-          {/* Custom Navigation Buttons */}
-          <CustomPrevButton ref={prevButtonRef} />
-          <CustomNextButton ref={nextButtonRef} />
-
-          <Swiper
-            modules={[Navigation, Pagination]}
-            spaceBetween={10}
-            slidesPerView={1}
-            centeredSlides={true}
-            navigation={{
-              nextEl: ".swiper-button-react-next",
-              prevEl: ".swiper-button-react-prev",
-            }}
-            onSwiper={(swiper) => {
-              swiper.params.navigation.prevEl = prevButtonRef.current;
-              swiper.params.navigation.nextEl = nextButtonRef.current;
-              swiper.navigation.init();
-              swiper.navigation.update();
-            }}
-            pagination={{ clickable: true }}
-            initialSlide={getInitialSlideIndex(teamMatchups, currentWeek)}
-          >
-            {teamMatchups.map((matchup, index) => {
-              const userTeamLogo = user?.avatar
-                ? `https://sleepercdn.com/avatars/thumbs/${user.avatar}`
-                : "https://via.placeholder.com/64?text=Team";
-
-              const opponentTeamLogo = matchup.opponentAvatar
-                ? `https://sleepercdn.com/avatars/thumbs/${matchup.opponentAvatar}`
-                : "https://via.placeholder.com/64?text=Opponent";
-
-              return (
-                <SwiperSlide key={index}>
-                  <div className="bg-[#1E2235] p-4 rounded-md shadow-md text-white">
-                    <div className="flex flex-col items-center">
-                      <span className="text-lg font-bold mb-2">
-                        Week {matchup.week}
-                      </span>
-
-                      <div className="flex items-center justify-center w-full">
-                        <div className="flex flex-col items-center w-1/2">
-                          <img
-                            src={userTeamLogo}
-                            alt="Your Team"
-                            className="w-12 h-12 mb-1 rounded-full"
-                          />
-                          <span className="font-medium text-sm">
-                            {user?.display_name || "Your Team"}
-                          </span>
-                          <span className="text-xl font-bold mt-1">
-                            {matchup.points.toFixed(2)} pts
-                          </span>
-                        </div>
-
-                        <div className="mx-2 text-gray-400 font-semibold text-sm">
-                          VS
-                        </div>
-
-                        <div className="flex flex-col items-center w-1/2">
-                          <img
-                            src={opponentTeamLogo}
-                            alt={matchup.opponentName}
-                            className="w-12 h-12 mb-1 rounded-full"
-                          />
-                          <span className="font-medium text-sm">
-                            {matchup.opponentName}
-                          </span>
-                          <span className="text-xl font-bold mt-1">
-                            {matchup.opponentPoints.toFixed(2)} pts
-                          </span>
-                        </div>
-                      </div>
-
-                      <span
-                        className={`mt-4 text-lg font-semibold ${getResultColorClass(
-                          matchup.result
-                        )}`}
-                      >
-                        {matchup.result}
-                      </span>
-                    </div>
-                  </div>
-                </SwiperSlide>
-              );
-            })}
-          </Swiper>
-        </div>
+{/* Matchups */}
 
 
 
@@ -550,15 +470,15 @@ const TeamDetails = ({ leagueId }) => {
               className={`p-4 ${bg} ${border} shadow-md rounded-md`}
             >
               <div className="flex items-center justify-between">
-                <span className={`font-semibold text-xs md:text-base ${text}`}>
+                <span className={`font-semibold text-xs text-[#fff]`}>
                   {name}
                 </span>
-                <span className="text-white text-xs md:text-base">
+                <span className="text-white font-bold text-xs">
                   {points} Pts
                 </span>
               </div>
-              <div className="mt-2 text-xs md:text-sm text-[#bbb]">
-                <span>{position}</span> - <span>({teamAbbr})</span>
+              <div className="mt-2 text-xs md:text-xs text-[#bbb]">
+                <span className={` ${text} ${bg}`}>{position}</span> - <span>({teamAbbr})</span>
               </div>
               <div className="mt-4 flex justify-between">
                 <FaInfoCircle
@@ -588,25 +508,28 @@ const TeamDetails = ({ leagueId }) => {
             <div className="flex-1">
               <h3 className="text-sm font-semibold mb-2">Weeks 1-8</h3>
               <ul>
-                {weeks1to8.map(({ week, player }) => (
+                {weeks1to8.map(({ week, player, text, bg, }) => (
                   <li
                     key={week}
                     className="flex text-sm justify-between items-center mb-2 pb-2 border-b border-gray-700"
                   >
                     <div>
-                      <span className="font-semibold text-xs">Week {week}</span>{" "}
+                      <span className="font-light text-[#bbb] text-sm">Week {week}</span>{" "}
                       {player && (
                         <>
-                          <span className={`ml-2 font-semibold ${player.text}`}>
+                          <span className={`ml-2 font-semibold text-xs text-[#fff] `}>
                             {player.name}
                           </span>{" "}
-                          <span className="text-xs ml-2 text-gray-400">
-                            ({player.position} - {player.teamAbbr})
+                          <span className={`text-xs ml-4 ${player.text}`}>
+                            ({player.position} - 
+                           <span>
+                            {player.teamAbbr})
+                            </span>
                           </span>
                         </>
                       )}
                     </div>
-                    <div className="text-white ml-2 text-xs font-bold">
+                    <div className="text-white ml-2 text-xs font-semibold">
                       {player ? `${player.points} pts` : "N/A"}
                     </div>
                   </li>
@@ -616,7 +539,7 @@ const TeamDetails = ({ leagueId }) => {
 
             {/* Right Side - Weeks 9-17 */}
             <div className="flex-1">
-              <h3 className="text-sm font-semibold mb-2">Weeks 9-17</h3>
+              <h3 className="text-sm font-light mb-2">Weeks 9-17</h3>
               <ul>
                 {weeks9to17.map(({ week, player }) => (
                   <li
@@ -624,7 +547,7 @@ const TeamDetails = ({ leagueId }) => {
                     className="flex text-sm justify-between items-center mb-2 pb-2 border-b border-gray-700"
                   >
                     <div>
-                      <span className="font-semibold">Week {week}</span>{" "}
+                      <span className="font-light text-[#bbb]">Week {week}</span>{" "}
                       {player && (
                         <>
                           <span className={`ml-2 font-semibold ${player.text}`}>
@@ -683,9 +606,12 @@ const TeamDetails = ({ leagueId }) => {
           className="flex text-sm justify-between items-center mb-2 pb-2 border-b border-gray-700"
         >
           <div>
-            <span className={`font-semibold ${text}`}>{name}</span>{" "}
-            <span className="text-xs text-gray-400">
-              ({position} - {teamAbbr})
+            <span className={`font-normal text-[#fff]`}>{name}</span>{" "}
+            <span className={`text-xs ${text}`}>
+              ({position} 
+                <span className="ml-1 text-[#bbb]">
+               - {teamAbbr})
+               </span>
             </span>
           </div>
           <div className="text-white font-bold">{points} pts</div>

@@ -4,6 +4,7 @@ import LeaguePage from './components/LeaguePage';
 import TeamDetails from './components/TeamDetails';
 import Header from './components/Header';
 import LeagueRosterAggregator from './components/LeagueRosterAggregator';
+import TestComponent from './components/TestComponent';
 import PlayerStatsTester from './components/PlayerStatsTester'; // Import the tester
 import { getLeagueRosters } from './api/sleeperApi'; // Import API
 
@@ -47,6 +48,7 @@ const App = () => {
         <Route path="/team/:rosterId" element={<TeamDetails leagueId={leagueId} rosters={rosters} />} />
         <Route path="/players" element={<LeagueRosterAggregator leagueId={leagueId} />} />
         <Route path="/players-test" element={<PlayerStatsTester leagueId={leagueId} rosters={rosters} />} />
+        <Route path="/test" element={<TestComponent leagueId={leagueId}/>} />
       </Routes>
     </div>
   );

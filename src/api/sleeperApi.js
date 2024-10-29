@@ -78,45 +78,58 @@ export const getLeagueMatchups = async (leagueId, week) => {
 };
 
 
-/** Fetch and aggregate player points for a league */
+//** Fetch and aggregate player points for the entire season */
 export const getAllPlayerPoints = async (leagueId, season = '2024') => {
   try {
-    // Define the number of weeks (adjust if necessary)
     const totalWeeks = 17; // Example for a 17-week season
 
-    // Fetch all matchups for each week in parallel (for roster info)
+    // Fetch all weekly stats for every player across the entire season
+    const allWeeklyStats = await getWeeklyPlayerStats(season);
+    console.log('Fetched all weekly player stats:', allWeeklyStats);
+
+    // Fetch all NFL players to ensure every player is included
+    const allPlayers = await getAllPlayers();
+
+    // Fetch all matchups across the season to identify players on rosters
     const allMatchups = await Promise.all(
       Array.from({ length: totalWeeks }, (_, i) =>
         getLeagueMatchups(leagueId, i + 1)
       )
     );
 
-    // Fetch all NFL players (including free agents)
-    const allPlayers = await getAllPlayers();
+    // Initialize a Set to track players who were on a roster at any point
+    const rosteredPlayers = new Set();
 
-    // Fetch all weekly player stats
-    const allWeeklyStats = await getWeeklyPlayerStats(season);
-
-    console.log('Fetched all matchups:', allMatchups);
-    console.log('Fetched all weekly player stats:', allWeeklyStats);
-
-    // Initialize player points object
-    const playerPoints = {};
-
-    // Process Weekly Stats: Sum points from weekly stats
-    Object.entries(allWeeklyStats).forEach(([playerId, stats]) => {
-      if (!playerPoints[playerId]) {
-        playerPoints[playerId] = { totalPoints: 0, weeklyPoints: {} };
-      }
-
-      Object.entries(stats.weeklyPoints).forEach(([week, points]) => {
-        const weekNumber = parseInt(week, 10);
-        playerPoints[playerId].totalPoints += points;
-        playerPoints[playerId].weeklyPoints[weekNumber] = points;
+    // Collect all player IDs from matchups
+    allMatchups.forEach((weekMatchups) => {
+      weekMatchups.forEach((matchup) => {
+        matchup.roster.forEach((playerId) => rosteredPlayers.add(playerId));
       });
     });
 
-    // Ensure all players from metadata are included, even if they have no points
+    console.log('Rostered Players:', Array.from(rosteredPlayers));
+
+    // Initialize the player points object for the entire season
+    const playerPoints = {};
+
+    // Aggregate points for every player across the entire season
+    Object.entries(allWeeklyStats).forEach(([playerId, stats]) => {
+      const playerIdStr = String(playerId);
+
+      // Ensure every player is initialized in the player points object
+      if (!playerPoints[playerIdStr]) {
+        playerPoints[playerIdStr] = { totalPoints: 0, weeklyPoints: {} };
+      }
+
+      // Aggregate points from each week, even if they weren’t on a roster
+      Object.entries(stats.weeklyPoints).forEach(([week, points]) => {
+        const weekNumber = parseInt(week, 10);
+        playerPoints[playerIdStr].totalPoints += points;
+        playerPoints[playerIdStr].weeklyPoints[weekNumber] = points;
+      });
+    });
+
+    // Ensure all players from metadata are included, even those with no points
     Object.keys(allPlayers).forEach((playerId) => {
       const playerIdStr = String(playerId);
       if (!playerPoints[playerIdStr]) {
@@ -131,6 +144,7 @@ export const getAllPlayerPoints = async (leagueId, season = '2024') => {
     throw new Error('Failed to fetch player points.');
   }
 };
+
 
 const fetchAllPlayers = async () => {
   try {
@@ -179,3 +193,36 @@ export const getNFLState = async () => {
   return await response.json();
 };
 
+
+export const getPlayerStatsForWeek = async (week) => {
+  try {
+    const response = await axios.get(`https://api.sleeper.app/v1/stats/nfl/regular/${week}`);
+    console.log('Raw Stats Response:', response.data); // Log the raw data
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching player stats for week ${week}:`, error);
+    return {};
+  }
+};
+
+export const getAllPlayersStatsForWeek = async (week) => {
+  try {
+    const players = await getAllPlayers();
+    const stats = await getPlayerStatsForWeek(week);
+
+    console.log('Player Stats:', stats); // Inspect the structure
+
+    return Object.keys(stats).map((playerId) => ({
+      id: playerId,
+      name: players[playerId]?.full_name || 'Unknown',
+      position: players[playerId]?.position || 'N/A',
+      team: players[playerId]?.team || 'N/A',
+      stdPoints: stats[playerId]?.points?.standard || 0, // Adjust if necessary
+      halfPprPoints: stats[playerId]?.points?.half_ppr || 0, // Adjust if necessary
+      pprPoints: stats[playerId]?.points?.ppr || 0, // Adjust if necessary
+    }));
+  } catch (error) {
+    console.error('Error fetching player stats for week:', error);
+    return [];
+  }
+};
