@@ -264,11 +264,11 @@ const LeaguePage = ({ leagueId }) => {
 
        {/* Filter Controls */}
        <div className="mb-6">
-        <label className="text-white mr-4">Sort By:</label>
+        <label className="text-white mr-4 ">Sort By:</label>
         <select
           value={sortOption}
           onChange={handleSortChange}
-          className="bg-[#252942] text-white p-2 rounded-md"
+          className="bg-[#252942] text-white p-2 "
         >
           <option value="leagueStandings">League Standings</option>
           <option value="winLoss">Win / Loss Record</option>

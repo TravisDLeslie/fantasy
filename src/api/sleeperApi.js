@@ -79,41 +79,48 @@ export const getLeagueMatchups = async (leagueId, week) => {
 
 
 /** Fetch and aggregate player points for a league */
-export const getAllPlayerPoints = async (leagueId) => {
+export const getAllPlayerPoints = async (leagueId, season = '2024') => {
   try {
-    // Fetch all 17 weeks of matchups in parallel
+    // Define the number of weeks (adjust if necessary)
+    const totalWeeks = 17; // Example for a 17-week season
+
+    // Fetch all matchups for each week in parallel (for roster info)
     const allMatchups = await Promise.all(
-      Array.from({ length: 17 }, (_, i) =>
-        fetchData(`${BASE_URL}/league/${leagueId}/matchups/${i + 1}`, [])
+      Array.from({ length: totalWeeks }, (_, i) =>
+        getLeagueMatchups(leagueId, i + 1)
       )
     );
 
     // Fetch all NFL players (including free agents)
     const allPlayers = await getAllPlayers();
 
+    // Fetch all weekly player stats
+    const allWeeklyStats = await getWeeklyPlayerStats(season);
+
     console.log('Fetched all matchups:', allMatchups);
+    console.log('Fetched all weekly player stats:', allWeeklyStats);
 
     // Initialize player points object
     const playerPoints = {};
 
-    // Process all matchups
-    allMatchups.forEach((weekMatchups, weekIndex) => {
-      weekMatchups.forEach(({ players = [], players_points = {} }) => {
-        players.forEach((playerId) => {
-          if (!playerPoints[playerId]) {
-            playerPoints[playerId] = { totalPoints: 0, weeklyPoints: {} };
-          }
-          const weekPoints = players_points[playerId] || 0;
-          playerPoints[playerId].totalPoints += weekPoints;
-          playerPoints[playerId].weeklyPoints[weekIndex + 1] = weekPoints;
-        });
+    // Process Weekly Stats: Sum points from weekly stats
+    Object.entries(allWeeklyStats).forEach(([playerId, stats]) => {
+      if (!playerPoints[playerId]) {
+        playerPoints[playerId] = { totalPoints: 0, weeklyPoints: {} };
+      }
+
+      Object.entries(stats.weeklyPoints).forEach(([week, points]) => {
+        const weekNumber = parseInt(week, 10);
+        playerPoints[playerId].totalPoints += points;
+        playerPoints[playerId].weeklyPoints[weekNumber] = points;
       });
     });
 
-    // Ensure free agents with no matchups are included
+    // Ensure all players from metadata are included, even if they have no points
     Object.keys(allPlayers).forEach((playerId) => {
-      if (!playerPoints[playerId]) {
-        playerPoints[playerId] = { totalPoints: 0, weeklyPoints: {} };
+      const playerIdStr = String(playerId);
+      if (!playerPoints[playerIdStr]) {
+        playerPoints[playerIdStr] = { totalPoints: 0, weeklyPoints: {} };
       }
     });
 
@@ -124,6 +131,17 @@ export const getAllPlayerPoints = async (leagueId) => {
     throw new Error('Failed to fetch player points.');
   }
 };
+
+const fetchAllPlayers = async () => {
+  try {
+    const response = await axios.get(`${BASE_URL}/players/nfl`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching all players:', error);
+    throw error;
+  }
+};
+
 
 /** Fetch detailed stats for a specific player matchup */
 export const getPlayerMatchupStats = async (season, week) => {
