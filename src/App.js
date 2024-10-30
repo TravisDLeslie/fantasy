@@ -4,9 +4,10 @@ import LeaguePage from './components/LeaguePage';
 import TeamDetails from './components/TeamDetails';
 import Header from './components/Header';
 import LeagueRosterAggregator from './components/LeagueRosterAggregator';
-import TestComponent from './components/TestComponent';
 import PlayerStatsTester from './components/PlayerStatsTester'; // Import the tester
 import { getLeagueRosters } from './api/sleeperApi'; // Import API
+import LeagueScoringSettings from './components/LeagueScoringSettings';
+
 
 const App = () => {
   const [leagueId, setLeagueId] = useState('1130687436515831808'); // Default league ID
@@ -14,6 +15,7 @@ const App = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigate = useNavigate(); // Navigation for redirection
+
 
   // Fetch league rosters when leagueId changes
   useEffect(() => {
@@ -47,8 +49,8 @@ const App = () => {
         <Route path="/" element={<LeaguePage leagueId={leagueId} />} />
         <Route path="/team/:rosterId" element={<TeamDetails leagueId={leagueId} rosters={rosters} />} />
         <Route path="/players" element={<LeagueRosterAggregator leagueId={leagueId} />} />
-        <Route path="/players-test" element={<PlayerStatsTester leagueId={leagueId} rosters={rosters} />} />
-        <Route path="/test" element={<TestComponent leagueId={leagueId}/>} />
+        <Route path="/scoring" element={<LeagueScoringSettings leagueId={leagueId} />} />
+
       </Routes>
     </div>
   );

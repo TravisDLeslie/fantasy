@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { FaLock } from 'react-icons/fa'; // Import Lock Icon
-import { useNavigate } from 'react-router-dom'; // Import navigate function
+import { useNavigate, Link } from 'react-router-dom'; // Import navigate function
 import menuIcon from '../assets/icons/menu.svg'; // Import custom menu icon
 
 const Header = ({ onLeagueIdChange }) => {
@@ -27,7 +27,9 @@ const Header = ({ onLeagueIdChange }) => {
 
   return (
     <header className="bg-[#1F2233] p-4 flex justify-between items-center">
-      <h1 className="text-3xl text-white font-bold">Edge</h1>
+      <Link to="/" className="text-3xl text-white font-bold hover:underline">
+        Fleeced
+      </Link>
 
       {/* Desktop Buttons */}
       <div className="hidden md:flex space-x-4">

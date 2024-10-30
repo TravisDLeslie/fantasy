@@ -176,11 +176,21 @@ export const getPlayerMatchupStats = async (season, week) => {
 };
 
 /** Fetch NFL schedule for all teams (if available) */
-/** Fetch NFL schedule for all teams */
-export const getSchedule = async (season = '2024') => {
-  const data = await fetchData(`${BASE_URL}/nfl/schedule/${season}`, []);
-  console.log('Fetched NFL Schedule:', data); // For debugging
-  return data;
+export const getSchedule = async (seasonType = 'regular', season = '2024') => {
+  const url = `https://api.sleeper.com/schedule/nfl/${seasonType}/${season}`;
+  
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch schedule: ${response.statusText}`);
+    }
+    const data = await response.json();
+    console.log('Fetched NFL Schedule:', data); // For debugging
+    return data;
+  } catch (error) {
+    console.error('Error fetching schedule:', error);
+    return []; // Return an empty array to prevent breaking the app
+  }
 };
 
 
@@ -226,3 +236,25 @@ export const getAllPlayersStatsForWeek = async (week) => {
     return [];
   }
 };
+
+/** Fetch stats for multiple players by player_id and week */
+export const getStatsForPlayers = async (playerIds, season = '2024', week) => {
+  try {
+    const stats = await Promise.all(
+      playerIds.map(async (playerId) => {
+        const response = await axios.get(
+          `${BASE_URL}/stats/nfl/player/${playerId}?season=${season}&season_type=regular&grouping=week`
+        );
+        console.log(`Stats for player ${playerId}:`, response.data[week] || {});
+        return { playerId, stats: response.data[week] || {} };
+      })
+    );
+
+    return stats;
+  } catch (error) {
+    console.error(`Error fetching stats for players:`, error);
+    return [];
+  }
+};
+
+

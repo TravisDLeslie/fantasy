@@ -1,5 +1,5 @@
-import React, { useRef, useEffect, useState } from "react";
-import { Line } from "react-chartjs-2";
+import React, { useRef } from 'react';
+import { Line } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
   Title,
@@ -9,9 +9,7 @@ import {
   PointElement,
   CategoryScale,
   LinearScale,
-} from "chart.js";
-
-import { getWeeklyPlayerStats_ } from "../api/sleeperApiCopy";
+} from 'chart.js';
 
 ChartJS.register(
   Title,
@@ -24,51 +22,30 @@ ChartJS.register(
 );
 
 const positionStyles = {
-  QB: { text: "text-[#FC2B6D]", bg: "bg-[#323655]", border: "rounded-md" },
-  RB: { text: "text-[#20CEB8]", bg: "bg-[#323655]", border: "rounded-md" },
-  WR: { text: "text-[#56C9F8]", bg: "bg-[#323655]", border: "rounded-md" },
-  TE: { text: "text-[#FEAE58]", bg: "bg-[#323655]", border: "rounded-md" },
-  K: { text: "text-[#C96CFF]", bg: "bg-[#323655]", border: "rounded-md" },
-  DEF: { text: "text-[#BF755D]", bg: "bg-[#323655]", border: "rounded-md" },
-  FLEX: { text: "text-pink-900", bg: "bg-[#323655]", border: "rounded-md" },
+  QB: { text: 'text-[#FC2B6D]', bg: 'bg-[#323655]', border: 'rounded-md' },
+  RB: { text: 'text-[#20CEB8]', bg: 'bg-[#323655]', border: 'rounded-md' },
+  WR: { text: 'text-[#56C9F8]', bg: 'bg-[#323655]', border: 'rounded-md' },
+  TE: { text: 'text-[#FEAE58]', bg: 'bg-[#323655]', border: 'rounded-md' },
+  K: { text: 'text-[#C96CFF]', bg: 'bg-[#323655]', border: 'rounded-md' },
+  DEF: { text: 'text-[#BF755D]', bg: 'bg-[#323655]', border: 'rounded-md' },
+  FLEX: { text: 'text-pink-900', bg: 'bg-[#323655]', border: 'rounded-md' },
 };
 
 const getPositionStyles = (position) =>
   positionStyles[position] || {
-    text: "text-gray-900",
-    bg: "bg-gray-300",
-    border: "rounded",
+    text: 'text-gray-900',
+    bg: 'bg-gray-300',
+    border: 'rounded',
   };
 
 const PlayerChart = ({
   playerName,
-  id,
   position,
   teamAbbr,
   weeklyPoints = {},
   byeWeek,
   onClose,
 }) => {
-  const [weeklyStats, setWeeklyStats] = useState({});
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        // Fetch the NFL Stats
-        const Stats = await getWeeklyPlayerStats_("2024", id);
-        setWeeklyStats(Stats);
-      } catch (err) {
-        console.error("Error fetching stats:", err);
-        setError("Failed to fetch stats.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchStats();
-  }, [id]);
   const chartRef = useRef();
 
   const labels = [];
@@ -84,20 +61,18 @@ const PlayerChart = ({
 
   const shouldExcludeWeek = (week) =>
     week === byeWeek ||
-    weeklyStats[week] === null ||
-    weeklyStats[week] === undefined;
+    weeklyPoints[week] === 0 ||
+    weeklyPoints[week] === undefined;
 
   Array.from({ length: currentWeek }, (_, i) => i + 1).forEach((week) => {
     labels.push(
       week === byeWeek
         ? `Week ${week} (Bye)`
-        : weeklyStats[week]?.stats?.pts_std === 0
+        : weeklyPoints[week] === 0
         ? `Week ${week} (Inactive)`
         : `Week ${week}`
     );
-    data.push(
-      shouldExcludeWeek(week) ? null : weeklyStats[week]?.stats?.pts_std
-    );
+    data.push(shouldExcludeWeek(week) ? null : weeklyPoints[week]);
   });
 
   const validPoints = data.filter((points) => points !== null);
@@ -105,7 +80,7 @@ const PlayerChart = ({
   const avgPoints =
     validPoints.length > 0
       ? (totalPoints / validPoints.length).toFixed(2)
-      : "0.00";
+      : '0.00';
   const minPoints = Math.min(...validPoints);
   const maxPoints = Math.max(...validPoints);
 
@@ -113,21 +88,21 @@ const PlayerChart = ({
     labels,
     datasets: [
       {
-        label: "Points per Week",
+        label: 'Points per Week',
         data,
-        borderColor: "#01F5BF",
+        borderColor: '#01F5BF',
         borderWidth: 1,
         fill: true,
         spanGaps: true,
         tension: 0.3,
         pointBackgroundColor: data.map((value) =>
-          value === minPoints || value === maxPoints ? "#fff" : "#BCC3FF"
+          value === minPoints || value === maxPoints ? '#fff' : '#BCC3FF'
         ),
       },
       {
         label: `Average Points: ${avgPoints}`,
         data: Array(data.length).fill(parseFloat(avgPoints)),
-        borderColor: "#E77C09",
+        borderColor: '#E77C09',
         borderWidth: 2,
         borderDash: [2, 5],
         fill: false,
@@ -144,20 +119,20 @@ const PlayerChart = ({
       y: {
         suggestedMin: minPoints - 5,
         suggestedMax: maxPoints + 5,
-        ticks: { color: "#fcfcfc", padding: 10 },
-        grid: { color: "#2B2B2B", drawBorder: false },
+        ticks: { color: '#fcfcfc', padding: 10 },
+        grid: { color: '#2B2B2B', drawBorder: false },
       },
       x: {
-        ticks: { color: "#fcfcfc", padding: 10 },
-        grid: { color: "#2B2B2B", drawBorder: false },
+        ticks: { color: '#fcfcfc', padding: 10 },
+        grid: { color: '#2B2B2B', drawBorder: false },
       },
     },
     plugins: {
-      legend: { labels: { color: "#fff", font: { size: 14 } } },
+      legend: { labels: { color: '#fff', font: { size: 14 } } },
       title: {
         display: false,
-        text: playerName || "Player Chart",
-        color: "#ffffff",
+        text: playerName || 'Player Chart',
+        color: '#ffffff',
         font: {
           size: 18,
         },
@@ -167,8 +142,8 @@ const PlayerChart = ({
           label: (context) => {
             const value = context.raw;
             const week = context.label;
-            if (week.includes("Inactive")) return `${week}: 0 Pts`;
-            if (week.includes("Bye")) return `${week}: Bye Week`;
+            if (week.includes('Inactive')) return `${week}: 0 Pts`;
+            if (week.includes('Bye')) return `${week}: Bye Week`;
             if (value === minPoints) return `Low: ${value} Pts`;
             if (value === maxPoints) return `High: ${value} Pts`;
             return `${value} Pts`;
@@ -190,13 +165,13 @@ const PlayerChart = ({
         if (minIndex !== -1) {
           const x = xScale.getPixelForValue(minIndex);
           const y = yScale.getPixelForValue(minPoints);
-          drawLabel(ctx, "Low", x, y, "#E77C09", minPoints);
+          drawLabel(ctx, 'Low', x, y, '#E77C09', minPoints);
         }
 
         if (maxIndex !== -1) {
           const x = xScale.getPixelForValue(maxIndex);
           const y = yScale.getPixelForValue(maxPoints);
-          drawLabel(ctx, "High", x, y, "#01F5BF", maxPoints);
+          drawLabel(ctx, 'High', x, y, '#01F5BF', maxPoints);
         }
       },
     },
@@ -204,10 +179,10 @@ const PlayerChart = ({
 
   const drawLabel = (ctx, text, x, y, color, points) => {
     ctx.save();
-    ctx.fillStyle = "#3B3F5E";
+    ctx.fillStyle = '#3B3F5E';
     ctx.strokeStyle = color;
     ctx.lineWidth = 1.5;
-    ctx.font = "10px Arial";
+    ctx.font = '10px Arial';
     const labelText = `${text}: ${points} Pts`;
     const textWidth = ctx.measureText(labelText).width + 8;
 
@@ -224,22 +199,13 @@ const PlayerChart = ({
     ctx.fill();
     ctx.stroke();
     ctx.fillStyle = color;
-    ctx.textAlign = "center";
+    ctx.textAlign = 'center';
     ctx.fillText(labelText, x, y - 5);
     ctx.restore();
   };
 
   const { text, bg, border } = getPositionStyles(position);
-  if (loading)
-    return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-        <div className="bg-[#15182D] p-4 md:p-8 rounded shadow-lg max-w-xl w-full">
-          <div className="text-white text-center text-xl mb-4">
-            Loading stats...
-          </div>
-        </div>
-      </div>
-    );
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 rounded-2xl flex items-center justify-center">
       <div className="bg-[#252942] p-4 md:p-8 rounded shadow-lg max-w-2xl w-full">
@@ -251,7 +217,9 @@ const PlayerChart = ({
             </span>
           </span>
           <div className="flex items-center">
-            <span className={`text-xs ${text} ${bg} ${border} px-2 py-1 mt-2`}>
+            <span
+              className={`text-xs ${text} ${bg} ${border} px-2 py-1 mt-2`}
+            >
               {position}
             </span>
             <span className="text-xs ml-2 text-gray-300 mt-1">
@@ -260,7 +228,7 @@ const PlayerChart = ({
           </div>
         </h2>
 
-        <div className="p-1 md:p-4" style={{ height: "500px" }}>
+        <div className="p-1 md:p-4" style={{ height: '500px' }}>
           <Line ref={chartRef} data={chartData} options={chartOptions} />
         </div>
 

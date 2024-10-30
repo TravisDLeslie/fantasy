@@ -1,17 +1,32 @@
 import React, { useEffect, useState } from 'react';
-import { getAllPlayersStatsForWeek } from '../api/sleeperApi'; // Adjust path if necessary
+import { getAllPlayersStatsForWeek, getLeagueInfo } from '../api/sleeperApi'; // Adjust path if needed
 
 const OFFENSIVE_POSITIONS = ['QB', 'RB', 'WR', 'TE', 'K']; // Valid offensive positions
 
-const TestComponent = ({ leagueId }) => {
+const TestComponent = ({ leagueId, season = 2024 }) => {
   const [playerStats, setPlayerStats] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [scoringFormat, setScoringFormat] = useState('stdPoints'); // Default: standard points
+  const [scoringFormat, setScoringFormat] = useState('stdPoints'); // Default scoring format
+  const [leagueSettings, setLeagueSettings] = useState({}); // Store league-specific settings
 
   useEffect(() => {
+    const fetchLeagueSettings = async () => {
+      try {
+        const leagueInfo = await getLeagueInfo(leagueId);
+        console.log('Fetched League Info:', leagueInfo); // Debug league settings
+
+        // Extract scoring format or other relevant info if necessary
+        const format = leagueInfo.scoring_settings.default; // Example: Adjust based on API response
+        setScoringFormat(format || 'stdPoints');
+        setLeagueSettings(leagueInfo);
+      } catch (error) {
+        console.error('Error fetching league info:', error);
+      }
+    };
+
     const fetchStats = async () => {
       try {
-        const stats = await getAllPlayersStatsForWeek(8); // Example: Week 8
+        const stats = await getAllPlayersStatsForWeek(season, 8); // Fetch week 8, 2024 season
         console.log('Fetched Player Stats:', stats); // Check raw data in console
 
         // Filter for offensive players and sort by points in descending order
@@ -27,8 +42,10 @@ const TestComponent = ({ leagueId }) => {
       }
     };
 
-    fetchStats();
-  }, [leagueId, scoringFormat]); // Re-run when scoring format changes
+    fetchLeagueSettings(); // Fetch league settings first
+    fetchStats(); // Fetch player stats
+
+  }, [leagueId, season, scoringFormat]); // Re-run when leagueId, season, or scoring format changes
 
   const handleScoringChange = (event) => setScoringFormat(event.target.value);
 

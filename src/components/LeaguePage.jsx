@@ -6,6 +6,7 @@ import {
   getLeagueRosters,
   getLeagueMatchups,
   getNFLState,
+  getStatsForPlayers,
 } from "../api/sleeperApi";
 import AwardsModal from "../components/AwardsModal";
 
@@ -51,6 +52,19 @@ const LeaguePage = ({ leagueId }) => {
         setRosters(rosterData);
 
         let currentWeek = nflState.week || 1;
+
+        const allMatchups = [];
+        const globalStatsByWeek = {};
+
+        for (let week = 1; week <= currentWeek; week++) {
+          const matchups = await getLeagueMatchups(leagueId, week);
+          allMatchups.push(...matchups);
+
+          // Fetch global player stats for each week
+          const globalStats = await getStatsForPlayers('2024', week);
+          globalStatsByWeek[week] = globalStats;
+        }
+
 
         // Create a mapping from roster_id to team and owner names
         const rosterIdToTeamInfo = {};
