@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Route, Routes, useNavigate } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, useNavigate, useParams } from 'react-router-dom';
 import LeaguePage from './components/LeaguePage';
 import TeamDetails from './components/TeamDetails';
 import Header from './components/Header';
 import LeagueRosterAggregator from './components/LeagueRosterAggregator';
-import PlayerStatsTester from './components/PlayerStatsTester'; // Import the tester
-import { getLeagueRosters } from './api/sleeperApi'; // Import API
 import LeagueScoringSettings from './components/LeagueScoringSettings';
-
+import PlayerStats from './components/PlayerStats';
+import { getLeagueRosters } from './api/sleeperApi'; // API import
+import PlayerSearch from './components/PlayerSearch';
 
 const App = () => {
   const [leagueId, setLeagueId] = useState('1130687436515831808'); // Default league ID
@@ -15,7 +15,6 @@ const App = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigate = useNavigate(); // Navigation for redirection
-
 
   // Fetch league rosters when leagueId changes
   useEffect(() => {
@@ -50,7 +49,7 @@ const App = () => {
         <Route path="/team/:rosterId" element={<TeamDetails leagueId={leagueId} rosters={rosters} />} />
         <Route path="/players" element={<LeagueRosterAggregator leagueId={leagueId} />} />
         <Route path="/scoring" element={<LeagueScoringSettings leagueId={leagueId} />} />
-
+        <Route path="/metrics" element={<PlayerSearch />} />
       </Routes>
     </div>
   );

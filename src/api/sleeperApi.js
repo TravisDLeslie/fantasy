@@ -237,9 +237,15 @@ export const getAllPlayersStatsForWeek = async (week) => {
   }
 };
 
-/** Fetch stats for multiple players by player_id and week */
-export const getStatsForPlayers = async (playerIds, season = '2024', week) => {
+
+
+export const getStatsForPlayers = async (playerIds = [], season = '2024', week) => {
   try {
+    if (!Array.isArray(playerIds)) {
+      console.error('playerIds must be an array');
+      return [];  // Return an empty array if playerIds is not an array
+    }
+
     const stats = await Promise.all(
       playerIds.map(async (playerId) => {
         const response = await axios.get(
@@ -256,5 +262,3 @@ export const getStatsForPlayers = async (playerIds, season = '2024', week) => {
     return [];
   }
 };
-
-

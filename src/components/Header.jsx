@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
-import { FaLock } from 'react-icons/fa'; // Import Lock Icon
-import { useNavigate, Link } from 'react-router-dom'; // Import navigate function
+import { FaLock, FaChartLine, FaChevronDown, FaListAlt } from 'react-icons/fa'; // Icons for menu items
+import { useNavigate, Link } from 'react-router-dom'; // Navigation tools
 import menuIcon from '../assets/icons/menu.svg'; // Import custom menu icon
 
 const Header = ({ onLeagueIdChange }) => {
   const [isModalOpen, setIsModalOpen] = useState(false); // Modal state
   const [inputLeagueId, setInputLeagueId] = useState(''); // Input state
   const [isMenuOpen, setIsMenuOpen] = useState(false); // Mobile menu state
-  const navigate = useNavigate(); // Use navigate function for page transitions
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false); // Desktop dropdown state
+  const navigate = useNavigate(); // Use navigate for page transitions
 
   const handleOpenModal = () => setIsModalOpen(true);
   const handleCloseModal = () => setIsModalOpen(false);
@@ -19,33 +20,60 @@ const Header = ({ onLeagueIdChange }) => {
     }
   };
 
-  const handlePlayerStatsClick = () => {
-    navigate('/players'); // Navigate to Player List Page
+  const handleNavigation = (path) => {
+    navigate(path); // Navigate to the specified route
+    setIsMenuOpen(false); // Close the menu after navigating (mobile)
+    setIsDropdownOpen(false); // Close dropdown after navigating (desktop)
   };
 
   const toggleMenu = () => setIsMenuOpen((prev) => !prev); // Toggle mobile menu
+  const toggleDropdown = () => setIsDropdownOpen((prev) => !prev); // Toggle desktop dropdown
 
   return (
     <header className="bg-[#1F2233] p-4 flex justify-between items-center">
+      {/* Logo with Home Link */}
       <Link to="/" className="text-3xl text-white font-bold hover:underline">
         Fleeced
       </Link>
 
-      {/* Desktop Buttons */}
-      <div className="hidden md:flex space-x-4">
-        <button
-          className="px-4 py-2 bg-[#01F5BF] text-[#15182D] font-semibold rounded hover:bg-[#019977] flex items-center"
-          onClick={handlePlayerStatsClick}
-        >
-          <FaLock className="mr-2" /> Player Stats
-        </button>
-
-        <button
-          className="px-4 py-2 bg-[#01F5BF] text-[#15182D] font-semibold rounded hover:bg-[#019977]"
-          onClick={handleOpenModal}
-        >
-          View Your League
-        </button>
+      {/* Desktop Dropdown Menu */}
+      <div className="hidden md:flex items-center space-x-4">
+        <div className="relative">
+          <button
+            className="flex items-center space-x-2 px-4 py-2 bg-[#01F5BF] text-[#15182D] font-semibold rounded hover:bg-[#019977]"
+            onClick={toggleDropdown}
+          >
+            <FaChevronDown className="mr-2" /> Menu
+          </button>
+          {isDropdownOpen && (
+            <div className="absolute right-0 mt-2 w-48 bg-[#15182D] rounded shadow-lg">
+              <button
+                className="block w-full px-4 py-2 text-left text-white hover:bg-[#019977] flex items-center"
+                onClick={() => handleNavigation('/players')}
+              >
+                <FaLock className="mr-2" /> Player Insights
+              </button>
+              <button
+                className="block w-full px-4 py-2 text-left text-white hover:bg-[#019977] flex items-center"
+                onClick={() => handleNavigation('/metrics')}
+              >
+                <FaChartLine className="mr-2" /> Player Metrics
+              </button>
+              <button
+                className="block w-full px-4 py-2 text-left text-white hover:bg-[#019977] flex items-center"
+                onClick={() => handleNavigation('/scoring')}
+              >
+                <FaListAlt className="mr-2" /> Scoring
+              </button>
+              <button
+                className="block w-full px-4 py-2 text-left text-white hover:bg-[#019977]"
+                onClick={handleOpenModal}
+              >
+                View Your League
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Mobile Menu Icon */}
@@ -53,30 +81,34 @@ const Header = ({ onLeagueIdChange }) => {
         <img src={menuIcon} alt="Menu" className="w-8 h-8" />
       </button>
 
-      {/* Mobile Menu */}
+      {/* Mobile Menu Drawer */}
       {isMenuOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
           <div className="bg-[#15182D] p-6 rounded shadow-lg max-w-sm w-full space-y-4">
             <button
               className="w-full px-4 py-2 bg-[#01F5BF] text-[#15182D] font-semibold rounded hover:bg-[#019977] flex items-center justify-center"
-              onClick={() => {
-                handlePlayerStatsClick();
-                toggleMenu();
-              }}
+              onClick={() => handleNavigation('/players')}
             >
-              <FaLock className="mr-2" /> Player Stats
+              <FaLock className="mr-2" /> Player Insights
             </button>
-
+            <button
+              className="w-full px-4 py-2 bg-[#01F5BF] text-[#15182D] font-semibold rounded hover:bg-[#019977] flex items-center justify-center"
+              onClick={() => handleNavigation('/metrics')}
+            >
+              <FaChartLine className="mr-2" /> Player Metrics
+            </button>
+            <button
+              className="w-full px-4 py-2 bg-[#01F5BF] text-[#15182D] font-semibold rounded hover:bg-[#019977] flex items-center justify-center"
+              onClick={() => handleNavigation('/scoring')}
+            >
+              <FaListAlt className="mr-2" /> Scoring
+            </button>
             <button
               className="w-full px-4 py-2 bg-[#01F5BF] text-[#15182D] font-semibold rounded hover:bg-[#019977]"
-              onClick={() => {
-                handleOpenModal();
-                toggleMenu();
-              }}
+              onClick={handleOpenModal}
             >
               View Your League
             </button>
-
             <button
               className="w-full px-4 py-2 bg-gray-400 text-white rounded hover:bg-gray-500"
               onClick={toggleMenu}
@@ -89,7 +121,7 @@ const Header = ({ onLeagueIdChange }) => {
 
       {/* League ID Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center">
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
           <div className="bg-[#15182D] p-6 rounded shadow-lg max-w-sm w-full">
             <h2 className="text-xl text-white font-bold mb-4">Enter Your Sleeper League ID</h2>
             <input

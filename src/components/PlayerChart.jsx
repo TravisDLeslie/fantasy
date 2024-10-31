@@ -12,6 +12,7 @@ import {
 } from "chart.js";
 
 import { getWeeklyPlayerStats_ } from "../api/sleeperApiCopy";
+import LeagueScoringSettings from "./LeagueScoringSettings";
 
 ChartJS.register(
   Title,
@@ -91,12 +92,12 @@ const PlayerChart = ({
     labels.push(
       week === byeWeek
         ? `Week ${week} (Bye)`
-        : weeklyStats[week]?.stats?.pts_std === 0
+        : weeklyStats[week]?.stats?.pts_ppr === 0
         ? `Week ${week} (Inactive)`
         : `Week ${week}`
     );
     data.push(
-      shouldExcludeWeek(week) ? null : weeklyStats[week]?.stats?.pts_std
+      shouldExcludeWeek(week) ? null : weeklyStats[week]?.stats?.pts_ppr
     );
   });
 
