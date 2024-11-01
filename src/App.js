@@ -5,7 +5,6 @@ import TeamDetails from './components/TeamDetails';
 import Header from './components/Header';
 import LeagueRosterAggregator from './components/LeagueRosterAggregator';
 import LeagueScoringSettings from './components/LeagueScoringSettings';
-import PlayerStats from './components/PlayerStats';
 import { getLeagueRosters } from './api/sleeperApi'; // API import
 import PlayerSearch from './components/PlayerSearch';
 

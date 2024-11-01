@@ -79,61 +79,42 @@ export const getLeagueMatchups = async (leagueId, week) => {
 
 
 //** Fetch and aggregate player points for the entire season */
-export const getAllPlayerPoints = async (leagueId, season = '2024') => {
+/** Fetch and aggregate player points for a league */
+export const getAllPlayerPoints = async (leagueId) => {
   try {
-    const totalWeeks = 17; // Example for a 17-week season
-
-    // Fetch all weekly stats for every player across the entire season
-    const allWeeklyStats = await getWeeklyPlayerStats(season);
-    console.log('Fetched all weekly player stats:', allWeeklyStats);
-
-    // Fetch all NFL players to ensure every player is included
-    const allPlayers = await getAllPlayers();
-
-    // Fetch all matchups across the season to identify players on rosters
+    // Fetch all 17 weeks of matchups in parallel
     const allMatchups = await Promise.all(
-      Array.from({ length: totalWeeks }, (_, i) =>
-        getLeagueMatchups(leagueId, i + 1)
+      Array.from({ length: 17 }, (_, i) =>
+        fetchData(`${BASE_URL}/league/${leagueId}/matchups/${i + 1}`, [])
       )
     );
 
-    // Initialize a Set to track players who were on a roster at any point
-    const rosteredPlayers = new Set();
+    // Fetch all NFL players (including free agents)
+    const allPlayers = await getAllPlayers();
 
-    // Collect all player IDs from matchups
-    allMatchups.forEach((weekMatchups) => {
-      weekMatchups.forEach((matchup) => {
-        matchup.roster.forEach((playerId) => rosteredPlayers.add(playerId));
-      });
-    });
+    console.log('Fetched all matchups:', allMatchups);
 
-    console.log('Rostered Players:', Array.from(rosteredPlayers));
-
-    // Initialize the player points object for the entire season
+    // Initialize player points object
     const playerPoints = {};
 
-    // Aggregate points for every player across the entire season
-    Object.entries(allWeeklyStats).forEach(([playerId, stats]) => {
-      const playerIdStr = String(playerId);
-
-      // Ensure every player is initialized in the player points object
-      if (!playerPoints[playerIdStr]) {
-        playerPoints[playerIdStr] = { totalPoints: 0, weeklyPoints: {} };
-      }
-
-      // Aggregate points from each week, even if they weren’t on a roster
-      Object.entries(stats.weeklyPoints).forEach(([week, points]) => {
-        const weekNumber = parseInt(week, 10);
-        playerPoints[playerIdStr].totalPoints += points;
-        playerPoints[playerIdStr].weeklyPoints[weekNumber] = points;
+    // Process all matchups
+    allMatchups.forEach((weekMatchups, weekIndex) => {
+      weekMatchups.forEach(({ players = [], players_points = {} }) => {
+        players.forEach((playerId) => {
+          if (!playerPoints[playerId]) {
+            playerPoints[playerId] = { totalPoints: 0, weeklyPoints: {} };
+          }
+          const weekPoints = players_points[playerId] || 0;
+          playerPoints[playerId].totalPoints += weekPoints;
+          playerPoints[playerId].weeklyPoints[weekIndex + 1] = weekPoints;
+        });
       });
     });
 
-    // Ensure all players from metadata are included, even those with no points
+    // Ensure free agents with no matchups are included
     Object.keys(allPlayers).forEach((playerId) => {
-      const playerIdStr = String(playerId);
-      if (!playerPoints[playerIdStr]) {
-        playerPoints[playerIdStr] = { totalPoints: 0, weeklyPoints: {} };
+      if (!playerPoints[playerId]) {
+        playerPoints[playerId] = { totalPoints: 0, weeklyPoints: {} };
       }
     });
 
@@ -260,5 +241,16 @@ export const getStatsForPlayers = async (playerIds = [], season = '2024', week) 
   } catch (error) {
     console.error(`Error fetching stats for players:`, error);
     return [];
+  }
+};
+
+export const fetchLeagueScoringSettings = async (leagueId) => {
+  try {
+    const response = await axios.get(`https://api.sleeper.app/v1/league/${leagueId}`);
+    console.log("Raw Scoring Settings Response:", response.data); // Confirm the structure and values
+    return response.data.scoring_settings; 
+  } catch (error) {
+    console.error("Error fetching league scoring settings:", error);
+    return null;
   }
 };
